@@ -418,6 +418,7 @@ def main():
         pred_files[i] = os.path.join(opt.pred_path, pred_files[i])
 
     evaluate(pred_files, gt_files, opt.pred_path, opt.output_file)
+    print('save results to', opt.output_file)
 
 if __name__ == '__main__':
     main()
