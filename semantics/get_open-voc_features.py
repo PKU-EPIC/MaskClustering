@@ -114,7 +114,7 @@ def main():
     for seq_name in args.seq_name_list.split('+'):
         args.seq_name = seq_name
         dataset = get_dataset(args)
-        object_dict = np.load(f'{dataset.object_dict_dir}/{args.config_type}/object_dict.npy', allow_pickle=True).item()
+        object_dict = np.load(f'{dataset.object_dict_dir}/{args.config}/object_dict.npy', allow_pickle=True).item()
         for key, value in object_dict.items():
             mask_list = value['repre_mask_list']
             if len(mask_list) == 0:
@@ -146,7 +146,7 @@ def main():
     for seq_name in args.seq_name_list.split('+'):
         args.seq_name = seq_name
         dataset = get_dataset(args)
-        np.save(os.path.join(dataset.object_dict_dir, f'{args.config_type}/open-vocabulary_features.npy'), feature_dict[seq_name])
+        np.save(os.path.join(dataset.object_dict_dir, f'{args.config}/open-vocabulary_features.npy'), feature_dict[seq_name])
 
 if __name__ == '__main__':
     main()

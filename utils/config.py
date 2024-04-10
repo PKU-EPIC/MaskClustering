@@ -5,7 +5,7 @@ from dataset.scannetpp import ScanNetPPDataset
 import json
 
 def update_args(args):
-    config_path = f'data/configs/{args.config_type}.json'
+    config_path = f'data/configs/{args.config}.json'
     with open(config_path, 'r') as f:
         config = json.load(f)
     for key in config:
@@ -14,11 +14,9 @@ def update_args(args):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_type', default='scannet', type=str)
     parser.add_argument('--seq_name', type=str)
-    parser.add_argument('--step', default=10, type=int)
     parser.add_argument('--seq_name_list', type=str)
-    parser.add_argument('--config_type', type=str, default='best_2')
+    parser.add_argument('--config', type=str, default='scannet')
     parser.add_argument('--debug', action="store_true")
 
     args = parser.parse_args()
@@ -26,14 +24,14 @@ def get_args():
     return args
 
 def get_dataset(args):
-    if args.dataset_type == 'scannet':
+    if args.dataset == 'scannet':
         dataset = ScanNetDataset(args.seq_name)
-    elif args.dataset_type == 'scannetpp':
+    elif args.dataset == 'scannetpp':
         dataset = ScanNetPPDataset(args.seq_name)
-    elif args.dataset_type == 'matterport3d':
+    elif args.dataset == 'matterport3d':
         dataset = MatterportDataset(args.seq_name)
     else:
-        print(args.dataset_type)
+        print(args.dataset)
         raise NotImplementedError
     return dataset
 

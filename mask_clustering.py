@@ -373,19 +373,19 @@ def export_objects(dataset, segment_list, mask_complete_vertex_index, coarse_poi
             'mask_list': pcld_mask_list,
             'repre_mask_list': find_represent_mask(pcld_mask_list),
         }
-    np.save(os.path.join(dataset.object_dict_dir, args.config_type, f'object_dict.npy'), object_dict, allow_pickle=True)
+    np.save(os.path.join(dataset.object_dict_dir, args.config, f'object_dict.npy'), object_dict, allow_pickle=True)
     return
 
 def main(args):
     dataset = get_dataset(args)
-    # if os.path.exists(os.path.join(dataset.object_dict_dir, args.config_type, f'object_dict.npy')):
+    # if os.path.exists(os.path.join(dataset.object_dict_dir, args.config, f'object_dict.npy')):
     #     return
 
     coarse_pcld = o3d.io.read_point_cloud(dataset.mesh_path)
     coarse_points = np.asarray(coarse_pcld.points)
     coarse_colors = np.zeros_like(coarse_points)
 
-    os.makedirs(os.path.join(dataset.object_dict_dir, args.config_type), exist_ok=True)
+    os.makedirs(os.path.join(dataset.object_dict_dir, args.config), exist_ok=True)
 
     frame_list = list(dataset.get_frame_list(0, -1, args.step))
     if args.debug:

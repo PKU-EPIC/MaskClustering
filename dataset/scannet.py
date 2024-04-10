@@ -2,23 +2,19 @@ import open3d as o3d
 import numpy as np
 import os
 import cv2
-from plyfile import PlyData
-import pandas as pd
 
 class ScanNetDataset:
     def __init__(self, seq_name) -> None:
         self.seq_name = seq_name
-        self.root = f'./data/scannet/{seq_name}'
+        self.root = f'./data/scannet/processed/{seq_name}'
         self.rgb_dir = f'{self.root}/color_640'
         self.depth_dir = f'{self.root}/depth'
         self.mask_image_dir = f'{self.root}/mask'
         self.object_dict_dir = f'{self.root}/object'
         self.mesh_path = f'{self.root}/{seq_name}_vh_clean_2.ply'
         self.extrinsics_dir = f'{self.root}/pose'
-        self.pred_dir = f'data/scannet/instance_segmentation/'
 
         self.depth_scale = 1000.0
-        self.roof_height = 2.4
         self.image_size = (640, 480)
 
     def get_video_end(self):
@@ -76,20 +72,6 @@ class ScanNetDataset:
         segmentation_path = os.path.join(self.mask_image_dir, f'{frame_id}.png')
         return rgb_path, segmentation_path
     
-    def get_gt_labels(self):
-        with open(self.gt_vis_path, 'rb') as f:
-            plydata = PlyData.read(f)
-            vertices = pd.DataFrame(plydata['vertex'].data).values
-
-        semantics = vertices[:, 6].astype(np.int32)
-        semantics = np.unique(semantics)
-        id2label = self.get_label_id()[1]
-        gt_labels = [id2label[s] for s in semantics if s != 0]
-
-        # remove ambiguous labels
-        gt_labels = [label for label in gt_labels if label not in ['furniture', 'wall', 'floor', 'ceiling', 'structure', 'storage organizer', 'alarm clock', 'fire alarm', 'power strip', 'object']]
-        return gt_labels
-
     def get_label_features(self):
         label_features_dict = np.load(f'data/text_features/scannet.npy', allow_pickle=True).item()
         return label_features_dict

@@ -115,12 +115,10 @@ class ScanNetPPDataset:
         self.mask_image_dir = f'{self.mask_dir}/image'
 
         self.mesh_path = f'data/scannetpp/pcld/{seq_name}/sampled_025.ply'
-        self.pred_dir = f'data/scannetpp/evaluation/pred'
 
         self.load_meta_data()
 
         self.depth_scale = 1000.0
-        self.roof_height = 20
         self.image_size = (1920, 1440)
 
     def load_meta_data(self):
@@ -143,14 +141,7 @@ class ScanNetPPDataset:
         self.extrinsics = extrinsics
         self.intrinsics = intrinsics
     
-    def get_video_end(self):
-        return self.frame_id_list[-1]
-    
     def get_frame_list(self, start, end, stride):
-        # depth_list = os.listdir(self.depth_dir)
-        # frame_id_list = [int(depth_name.split('.')[0].split('_')[1]) for depth_name in depth_list]
-        # frame_id_list.sort()
-        # return frame_id_list
         return self.frame_id_list
     
     def get_intrinsics(self, frame_id):

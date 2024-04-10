@@ -13,12 +13,11 @@ class MatterportDataset:
         self.mesh_path = f'{self.root}/house_segmentations/{seq_name}.ply'
         self.rgb_names, self.depth_names, self.intrinsics, self.extrinsics = \
             self._obtain_intr_extr_matterport()
-        self.pred_dir = f'data/matterport3d/instance_segmentation/pred'
         
         # output
         self.output_root = f'{self.root}/output'
-        self.mask_image_dir = f'{self.output_root}/mask/{mask_generator}/image'
-        self.object_dict_dir = f'{self.output_root}/object/dict'
+        self.mask_image_dir = f'{self.output_root}/mask/'
+        self.object_dict_dir = f'{self.output_root}/object'
 
         self.depth_scale = 4000.0 # (0.25mm per unit) 1u = 1/4000 m
         self.image_size = (1280, 1024)
@@ -128,12 +127,6 @@ class MatterportDataset:
         mesh = o3d.io.read_triangle_mesh(self.mesh_path)
         vertices = np.asarray(mesh.vertices)
         return len(vertices)
-    
-    def get_roof_height(self):
-        mesh = o3d.io.read_triangle_mesh(self.mesh_path)
-        vertices = np.asarray(mesh.vertices)
-        roof_height = np.max(vertices[:, 2])
-        return roof_height
 
     def get_gt_labels(self):
         raise NotImplementedError

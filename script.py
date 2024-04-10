@@ -1,6 +1,7 @@
 import os
 from tqdm import tqdm
 import time
+from utils.config import get_args
 
 def execute_commands(commands_list, command_type, process_num):
     print('====> Start', command_type)
@@ -13,7 +14,7 @@ def execute_commands(commands_list, command_type, process_num):
     pool.terminate()
     print('====> Finish', command_type)
 
-def get_seq_name_list(dataset_type):
+def get_seq_name_list(dataset):
     file_path = '/home/miyan/3DSAM/data/scannet/splits/scannetv2_val.txt'
     with open(file_path, 'r') as f:
         seq_name_list = f.readlines()
@@ -39,32 +40,36 @@ def parallel_compute(general_command, command_name, resource_type, cuda_list, se
             commands.append(f'{general_command} --seq_name {seq_name}')
         execute_commands(commands, command_name, cuda_num)
 
-def main(config_type):
-    dataset_type = 'scannet'
-    root = '/home/miyan/3DSAM/data/scannet/processed'
+def main(args):
+    dataset = args.dataset
+    config = args.config
+
+    if dataset == 'scannet':
+        root = 'data/scannet/processed'
+        image_path_pattern = 'color_640/*0.jpg'
+        gt = 'data/scannet/gt'
+
     cuda_list = [0, 1]
-    step = 10
-    os.makedirs(f'/home/miyan/3DSAM/data/scannet/instance_segmentation/pred_10_{config_type}/', exist_ok=True)
 
     t0 = time.time()
-    seq_name_list = get_seq_name_list(dataset_type)[:2]
+    seq_name_list = get_seq_name_list(dataset)[:2]
     print('There are %d scenes' % len(seq_name_list))
     
-    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern \'color_640/*0.jpg\'', 'predict mask', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern}', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
-    # parallel_compute(f'python mask_clustering.py --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python mask_clustering.py --config {config}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
 
-    parallel_compute(f'python -m semantics.get_open-voc_features --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python -m semantics.get_open-voc_features --config {config}', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
 
-    parallel_compute(f'python -m semantics.open-voc_query --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'get text labels', 'cpu', cuda_list, seq_name_list)
+    parallel_compute(f'python -m semantics.open-voc_query --config {config}', 'get text labels', 'cpu', cuda_list, seq_name_list)
     
-    os.system(f'python -m evaluation.evaluate --pred_path data/scannet/instance_segmentation/{config_type} --gt_path /home/miyan/3Dmapping/data/scannet/instance_segmentation/gt/gt_file/200 --dataset scannet')
-    os.system(f'python -m evaluation.evaluate --pred_path data/scannet/instance_segmentation/{config_type} --gt_path /home/miyan/3Dmapping/data/scannet/instance_segmentation/gt/gt_file/200 --dataset scannet --no_class')
+    os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset}')
+    os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset} --no_class')
 
     print('total time', (time.time() - t0)//60)
     print('Total scenes', len(seq_name_list))
     print('Average time', (time.time() - t0) / len(seq_name_list))
 
 if __name__ == '__main__':
-    for config_type in ['scannet', 'scannet_filter_0.5']:
-        main(config_type)
+    args = get_args()
+    main(args)

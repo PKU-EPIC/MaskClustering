@@ -27,7 +27,7 @@ elif opt.dataset == 'scannetpp':
 
 
 if opt.output_file == '':
-    opt.output_file = os.path.join(f'data/results/{opt.dataset}', opt.pred_path.split('/')[-1] + '.txt')
+    opt.output_file = os.path.join(f'data/evaluation/{opt.dataset}', opt.pred_path.split('/')[-1] + '.txt')
     os.makedirs(os.path.dirname(opt.output_file), exist_ok=True)
 if opt.no_class:
     opt.output_file = opt.output_file.replace('.txt', '_class_agnostic.txt')

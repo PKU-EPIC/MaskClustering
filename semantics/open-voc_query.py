@@ -13,11 +13,11 @@ def main(args):
     label_text_features = np.stack(list(label_features_dict.values()))
     descriptions = list(label_features_dict.keys())
     
-    object_dict = np.load(f'{dataset.object_dict_dir}/{args.config_type}/object_dict.npy', allow_pickle=True).item()
-    clip_feature = np.load(f'{dataset.object_dict_dir}/{args.config_type}/open-vocabulary_features.npy', allow_pickle=True).item()
+    object_dict = np.load(f'{dataset.object_dict_dir}/{args.config}/object_dict.npy', allow_pickle=True).item()
+    clip_feature = np.load(f'{dataset.object_dict_dir}/{args.config}/open-vocabulary_features.npy', allow_pickle=True).item()
     label2id = dataset.get_label_id()[0]
 
-    pred_dir = os.path.join(dataset.pred_dir, args.config_type)
+    pred_dir = os.path.join('data/prediction', args.config)
     os.makedirs(pred_dir, exist_ok=True)
 
     num_instance = len(object_dict)
