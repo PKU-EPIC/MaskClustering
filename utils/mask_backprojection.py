@@ -130,7 +130,6 @@ def turn_mask_to_point(dataset, scene_points, mask_image, frame_id):
 
 
 def frame_backprojection(dataset, scene_points, frame_id):
-    mask_image_path = os.path.join(dataset.mask_image_dir, f'{frame_id}.png')
-    mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
+    mask_image = dataset.get_mask(frame_id)
     mask_info, _, frame_vertex_index_set = turn_mask_to_point(dataset, scene_points, mask_image, frame_id)
     return mask_info, frame_vertex_index_set

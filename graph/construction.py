@@ -114,8 +114,9 @@ def process_one_mask(point_in_mask_matrix, boundary_points, mask_point_cloud, fr
         if invisible_ratio > args.mask_disappear_ratio and (np.sum(mask_id_count) - mask_id_count[0]) < args.mask_disappear_num:
             continue
         visible_num += 1
+        mask_id_count[0] = 0
         max_mask_id = np.argmax(mask_id_count)
-        contained_ratio = mask_id_count[max_mask_id] / np.sum(mask_id_count[1:])
+        contained_ratio = mask_id_count[max_mask_id] / np.sum(mask_id_count)
         if contained_ratio > args.valid_mask_ratio:
             visible_frame[frame_id] = 1
             frame_mask_idx = global_frame_mask_list.index((frame_list[frame_id], max_mask_id))

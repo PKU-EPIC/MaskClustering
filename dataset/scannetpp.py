@@ -2,8 +2,8 @@ import open3d as o3d
 import numpy as np
 import os
 import cv2
-import json
 import collections
+from evaluation.constants import SCANNETPP_LABELS, SCANNETPP_IDS
 
 BaseImage = collections.namedtuple(
     "Image", ["id", "qvec", "tvec", "camera_id", "name", "xys", "point3D_ids"])
@@ -110,9 +110,8 @@ class ScanNetPPDataset:
         self.rgb_dir = f'{self.root}/iphone/rgb'
         self.depth_dir = f'{self.root}/iphone/render_depth'
 
-        self.mask_dir = f'{self.root}/output/mask'
+        self.mask_image_dir = f'{self.root}/output/mask'
         self.object_dict_dir = f'{self.root}/output/object'
-        self.mask_image_dir = f'{self.mask_dir}/image'
 
         self.mesh_path = f'data/scannetpp/pcld/{seq_name}/sampled_025.ply'
 
@@ -170,6 +169,11 @@ class ScanNetPPDataset:
         #     rgb = cv2.resize(rgb, (256, 192))
         return rgb    
 
+    def get_mask(self, frame_id):
+        mask_image_path = os.path.join(self.mask_image_dir, f'{frame_id}.png')
+        mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
+        return mask_image
+
     def get_scene_points(self):
         mesh = o3d.io.read_point_cloud(self.mesh_path)
         vertices = np.asarray(mesh.points)
@@ -177,7 +181,7 @@ class ScanNetPPDataset:
     
     def get_frame_path(self, frame_id):
         rgb_path = os.path.join(self.rgb_dir, 'frame_%06d.jpg' % frame_id)
-        segmentation_path = os.path.join(self.mask_image_dir, f'{frame_id}.npy')
+        segmentation_path = os.path.join(self.mask_image_dir, f'{frame_id}.png')
         return rgb_path, segmentation_path
     
     def get_label_features(self):
@@ -185,11 +189,8 @@ class ScanNetPPDataset:
         return label_features_dict
 
     def get_label_id(self):
-        with open('data/scannetpp/metadata/class_id.txt', 'r') as fp:
-            self.class_id = [int(x) for x in fp.read().splitlines()]
-
-        with open('data/scannetpp/metadata/class_name.txt', 'r') as fp:
-            self.class_label = [x for x in fp.read().splitlines()]
+        self.class_id = SCANNETPP_IDS
+        self.class_label = SCANNETPP_LABELS
         
         self.label2id = {}
         for label, id in zip(self.class_label, self.class_id):

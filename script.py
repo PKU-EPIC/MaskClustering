@@ -15,7 +15,12 @@ def execute_commands(commands_list, command_type, process_num):
     print('====> Finish', command_type)
 
 def get_seq_name_list(dataset):
-    file_path = '/home/miyan/3DSAM/data/scannet/splits/scannetv2_val.txt'
+    if dataset == 'scannet':
+        file_path = 'data/splits/scannet.txt'
+    elif dataset == 'scannetpp':
+        file_path = 'data/splits/scannetpp.txt'
+    elif dataset == 'matterport3d':
+        file_path = 'data/splits/matterport3d.txt'
     with open(file_path, 'r') as f:
         seq_name_list = f.readlines()
     seq_name_list = [seq_name.strip() for seq_name in seq_name_list]
@@ -46,25 +51,33 @@ def main(args):
 
     if dataset == 'scannet':
         root = 'data/scannet/processed'
-        image_path_pattern = 'color_640/*0.jpg'
+        image_path_pattern = 'color_640/*0.jpg' # stride = 10
         gt = 'data/scannet/gt'
+    elif dataset == 'scannetpp':
+        root = 'data/scannet/processed'
+        image_path_pattern = 'iphone/rgb/*0.jpg' # stride = 10
+        gt = 'data/scannetpp/gt'
+    elif dataset == 'matterport3d':
+        root = 'data/matterport3d/scans'
+        image_path_pattern = '*/undistorted_color_images/*.jpg' # stride = 1
+        gt = 'data/matterport3d/gt'
 
     cuda_list = [0, 1]
 
     t0 = time.time()
-    seq_name_list = get_seq_name_list(dataset)#[:2]
+    seq_name_list = get_seq_name_list(dataset)
     print('There are %d scenes' % len(seq_name_list))
     
-    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern}', 'predict mask', 'cuda', cuda_list, seq_name_list)
+    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
-    parallel_compute(f'python main.py --config {config}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python main.py --config {config} --debug', 'mask clustering', 'cuda', cuda_list, seq_name_list)
 
     parallel_compute(f'python -m semantics.get_open-voc_features --config {config}', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
 
     parallel_compute(f'python -m semantics.open-voc_query --config {config}', 'get text labels', 'cpu', cuda_list, seq_name_list)
     
     os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset}')
-    # os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset} --no_class')
+    os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset} --no_class')
 
     print('total time', (time.time() - t0)//60)
     print('Total scenes', len(seq_name_list))
