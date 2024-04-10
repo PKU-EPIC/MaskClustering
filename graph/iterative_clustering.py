@@ -2,10 +2,10 @@ import networkx as nx
 from graph.node import Node
 import torch
 
-def cluster_into_new_nodes(level, old_nodes, graph):
+def cluster_into_new_nodes(iteration, old_nodes, graph):
     new_nodes = []
     for component in nx.connected_components(graph):
-        node_info = (level, len(new_nodes))
+        node_info = (iteration, len(new_nodes))
         new_nodes.append(Node.create_node_from_list([old_nodes[node] for node in component], node_info))
     return new_nodes
 

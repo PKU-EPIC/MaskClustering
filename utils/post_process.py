@@ -131,8 +131,8 @@ def export_objects(dataset, segment_list, mask_point_clouds, scene_points, coars
         if len(segment.mask_list) < 2:
             continue
         
-        pcld, complete_index_list = segment.get_complete_pcld(scene_points)
-        object_pcld_list, object_pcld_coarse_index_list = dbscan_process(pcld, complete_index_list, args.dbscan_threshold)
+        pcld, point_ids = segment.get_point_cloud(scene_points)
+        object_pcld_list, object_pcld_coarse_index_list = dbscan_process(pcld, point_ids, args.dbscan_threshold)
 
         object_pcld_list, object_pcld_coarse_index_list, object_bbox_list, object_mask_list = point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, object_pcld_list, object_pcld_coarse_index_list, mask_point_clouds, frame_list, args)
 
