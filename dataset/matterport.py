@@ -4,7 +4,7 @@ import os
 import cv2
 
 class MatterportDataset:
-    def __init__(self, seq_name, mask_generator) -> None:
+    def __init__(self, seq_name) -> None:
         self.seq_name = seq_name
         self.root = f'./data/matterport3d/v1/scans/{seq_name}/{seq_name}'
         self.rgb_dir = f'{self.root}/undistorted_color_images'
@@ -119,6 +119,10 @@ class MatterportDataset:
         rgb_path = os.path.join(self.rgb_dir, self.rgb_names[frame_id])
         segmentation_path = os.path.join(self.mask_image_dir, f'{frame_id}.npy')
         return rgb_path, segmentation_path
+
+    def get_label_features(self):
+        label_features_dict = np.load(f'data/text_features/matterport3d.npy', allow_pickle=True).item()
+        return label_features_dict
 
     def get_total_vertex_num(self):
         mesh = o3d.io.read_triangle_mesh(self.mesh_path)

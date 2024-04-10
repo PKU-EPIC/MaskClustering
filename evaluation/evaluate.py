@@ -2,7 +2,6 @@ import os, sys, argparse
 from copy import deepcopy
 import numpy as np
 import torch
-from tqdm import tqdm
 from evaluation.utils_3d import get_instances
 
 parser = argparse.ArgumentParser()
@@ -282,7 +281,7 @@ def assign_instances_for_scan(pred_file, gt_file):
     gt_tensor_dict = get_gt_tensor(gt_ids, gt_instances)
 
     # go thru all prediction masks
-    for pred_mask_file in tqdm(pred_info):
+    for pred_mask_file in (pred_info):
         if opt.no_class:
             label_id = VALID_CLASS_IDS[0]
         else:

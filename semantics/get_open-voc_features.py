@@ -1,3 +1,9 @@
+'''
+    This script extracts open-vocabulary visual features for each mask following OpenMask3D.
+    For each mask, we crop the image with CROP_SCALES=3 scales based on the mask.
+    Then we extract the visual features using CLIP model and average these features as the mask feature.
+'''
+
 import open_clip
 import os
 from PIL import Image
@@ -22,7 +28,7 @@ class CroppedImageDataset(Dataset):
                 frame_id_list: frame id for each mask
                 mask_id_list: mask id for each mask
                 rgb_path_list: rgb path for each mask
-                segmentation_path_list: mask path for each mask
+                segmentation_path_list: segmentation path for each mask
                 preprocess: image preprocessing function
         '''
         self.seq_name_list = seq_name_list
@@ -85,7 +91,6 @@ class CroppedImageDataset(Dataset):
         rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB)
         
         segmentation_image = cv2.imread(segmentation_path, cv2.IMREAD_UNCHANGED)
-        # segmentation_image = np.load(segmentation_path)
         mask = (segmentation_image == mask_id)
         cropped_images = get_cropped_image(mask, np.array(rgb_image))
 
@@ -111,10 +116,9 @@ def main():
         dataset = get_dataset(args)
         object_dict = np.load(f'{dataset.object_dict_dir}/{args.config_type}/object_dict.npy', allow_pickle=True).item()
         for key, value in object_dict.items():
-            mask_info_list = value['mask_list']
-            if len(mask_info_list) == 0:
-                continue
             mask_list = value['repre_mask_list']
+            if len(mask_list) == 0:
+                continue
             for mask_info in mask_list:
                 seq_name_list.append(seq_name)
                 frame_id = mask_info[0]
@@ -125,7 +129,7 @@ def main():
                 segmentation_path_list.append(segmentation_path)
         feature_dict[seq_name] = {}
 
-    dataloader = DataLoader(CroppedImageDataset(seq_name_list, frame_id_list, mask_id_list, rgb_path_list, segmentation_path_list, preprocess), batch_size=64, shuffle=False, num_workers=32)
+    dataloader = DataLoader(CroppedImageDataset(seq_name_list, frame_id_list, mask_id_list, rgb_path_list, segmentation_path_list, preprocess), batch_size=64, shuffle=False, num_workers=16)
     
     print('[INFO] extracting features')
     for images, seq_names, frame_ids, mask_ids in tqdm(dataloader):
@@ -133,8 +137,8 @@ def main():
         image_input = images.cuda()
         with torch.no_grad():
             image_features = model.encode_image(image_input).float()
-        image_features /= image_features.norm(dim=-1, keepdim=True)
-        image_features = image_features.cpu().numpy()
+            image_features /= image_features.norm(dim=-1, keepdim=True)
+            image_features = image_features.cpu().numpy()
         for i in range(len(image_features) // CROP_SCALES):
             feature_dict[seq_names[i]][f'{frame_ids[i]}_{mask_ids[i]}'] = image_features[CROP_SCALES*i:CROP_SCALES*(i+1)].mean(axis=0)
     print('[INFO] finish extracting features')
@@ -142,7 +146,7 @@ def main():
     for seq_name in args.seq_name_list.split('+'):
         args.seq_name = seq_name
         dataset = get_dataset(args)
-        np.save(os.path.join(dataset.object_dict_dir, 'object_open-vocabulary_features.npy'), feature_dict[seq_name])
+        np.save(os.path.join(dataset.object_dict_dir, f'{args.config_type}/open-vocabulary_features.npy'), feature_dict[seq_name])
 
 if __name__ == '__main__':
     main()

@@ -19,7 +19,6 @@ def get_args():
     parser.add_argument('--step', default=10, type=int)
     parser.add_argument('--seq_name_list', type=str)
     parser.add_argument('--config_type', type=str, default='best_2')
-    parser.add_argument('--mask_generator', type=str, default='cropformer_intrinsics')
     parser.add_argument('--debug', action="store_true")
 
     args = parser.parse_args()
@@ -28,11 +27,11 @@ def get_args():
 
 def get_dataset(args):
     if args.dataset_type == 'scannet':
-        dataset = ScanNetDataset(args.seq_name, args.step, args.mask_generator)
+        dataset = ScanNetDataset(args.seq_name)
     elif args.dataset_type == 'scannetpp':
-        dataset = ScanNetPPDataset(args.seq_name, args.step)
+        dataset = ScanNetPPDataset(args.seq_name)
     elif args.dataset_type == 'matterport3d':
-        dataset = MatterportDataset(args.seq_name, 'cropformer')
+        dataset = MatterportDataset(args.seq_name)
     else:
         print(args.dataset_type)
         raise NotImplementedError

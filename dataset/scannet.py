@@ -6,7 +6,7 @@ from plyfile import PlyData
 import pandas as pd
 
 class ScanNetDataset:
-    def __init__(self, seq_name, step, mask_generator) -> None:
+    def __init__(self, seq_name) -> None:
         self.seq_name = seq_name
         self.root = f'./data/scannet/{seq_name}'
         self.rgb_dir = f'{self.root}/color_640'
@@ -25,16 +25,6 @@ class ScanNetDataset:
         video_end = int(self.get_image_list()[-1].split('.')[0])
         return video_end
     
-    def get_window_list(self):
-        video_start = 0
-        video_end = self.get_video_end()
-        window_list = []
-        start_list = list(range(video_start, video_end, 100))
-        for window_start in start_list:
-            window_end = min(window_start+200, video_end)
-            window_list.append((window_start, window_end))
-        return window_list
-
     def get_image_list(self, stride=1):
         image_list = os.listdir(self.rgb_dir)
         image_list = sorted(image_list, key=lambda x: int(x.split('.')[0]))
@@ -99,6 +89,10 @@ class ScanNetDataset:
         # remove ambiguous labels
         gt_labels = [label for label in gt_labels if label not in ['furniture', 'wall', 'floor', 'ceiling', 'structure', 'storage organizer', 'alarm clock', 'fire alarm', 'power strip', 'object']]
         return gt_labels
+
+    def get_label_features(self):
+        label_features_dict = np.load(f'data/text_features/scannet.npy', allow_pickle=True).item()
+        return label_features_dict
 
     def get_total_vertex_num(self):
         mesh = o3d.io.read_triangle_mesh(self.mesh_path)

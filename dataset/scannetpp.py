@@ -104,7 +104,7 @@ def read_cameras_text(path):
     return cameras
 
 class ScanNetPPDataset:
-    def __init__(self, seq_name, step) -> None:
+    def __init__(self, seq_name) -> None:
         self.seq_name = seq_name
         self.root = f'./data/scannetpp/data/{seq_name}'
         self.rgb_dir = f'{self.root}/iphone/rgb'
@@ -115,7 +115,7 @@ class ScanNetPPDataset:
         self.mask_image_dir = f'{self.mask_dir}/image'
 
         self.mesh_path = f'data/scannetpp/pcld/{seq_name}/sampled_025.ply'
-        self.pred_dir = f'data/scannetpp/evaluation/pred/pred_{step}'
+        self.pred_dir = f'data/scannetpp/evaluation/pred'
 
         self.load_meta_data()
 
@@ -189,6 +189,10 @@ class ScanNetPPDataset:
         segmentation_path = os.path.join(self.mask_image_dir, f'{frame_id}.npy')
         return rgb_path, segmentation_path
     
+    def get_label_features(self):
+        label_features_dict = np.load(f'data/text_features/scannetpp.npy', allow_pickle=True).item()
+        return label_features_dict
+
     def get_label_id(self):
         with open('data/scannetpp/metadata/class_id.txt', 'r') as fp:
             self.class_id = [int(x) for x in fp.read().splitlines()]

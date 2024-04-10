@@ -47,12 +47,12 @@ def main(config_type):
     os.makedirs(f'/home/miyan/3DSAM/data/scannet/instance_segmentation/pred_10_{config_type}/', exist_ok=True)
 
     t0 = time.time()
-    seq_name_list = get_seq_name_list(dataset_type)
+    seq_name_list = get_seq_name_list(dataset_type)[:2]
     print('There are %d scenes' % len(seq_name_list))
     
-    parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern \'color_640/*0.jpg\'', 'predict mask', 'cuda', cuda_list, seq_name_list)
+    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern \'color_640/*0.jpg\'', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
-    parallel_compute(f'python mask_clustering.py --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
+    # parallel_compute(f'python mask_clustering.py --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
 
     parallel_compute(f'python -m semantics.get_open-voc_features --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
 
