@@ -52,20 +52,19 @@ def main(config_type):
     
     parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern \'color_640/*0.jpg\'', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
-    # # mask association
-    # parallel_compute(f'python merge.py --dataset_type {dataset_type} --step {step} --config_type {config_type} --debug', 'mask association', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python mask_clustering.py --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
 
-    # parallel_compute(f'python -m semantics.get_open-voc_features --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'get semantic features', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python -m semantics.get_open-voc_features --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
 
-    # parallel_compute(f'python -m semantics.open-voc_query --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'get semantic labels', 'cpu', cuda_list, seq_name_list)
+    parallel_compute(f'python -m semantics.open-voc_query --dataset_type {dataset_type} --step {step} --config_type {config_type}', 'get text labels', 'cpu', cuda_list, seq_name_list)
     
-    # os.system(f'python scripts/evaluate_scannet.py --pred_path /home/miyan/3Dmapping/data/scannet/instance_segmentation/pred_{step}/{config_type}')
-    # os.system(f'python scripts/evaluate_scannet.py --pred_path /home/miyan/3Dmapping/data/scannet/instance_segmentation/pred_{step}/{config_type} --no_class')
+    os.system(f'python -m evaluation.evaluate --pred_path data/scannet/instance_segmentation/{config_type} --gt_path /home/miyan/3Dmapping/data/scannet/instance_segmentation/gt/gt_file/200 --dataset scannet')
+    os.system(f'python -m evaluation.evaluate --pred_path data/scannet/instance_segmentation/{config_type} --gt_path /home/miyan/3Dmapping/data/scannet/instance_segmentation/gt/gt_file/200 --dataset scannet --no_class')
 
     print('total time', (time.time() - t0)//60)
     print('Total scenes', len(seq_name_list))
     print('Average time', (time.time() - t0) / len(seq_name_list))
 
 if __name__ == '__main__':
-    for config_type in ['scannet_connect_0.9']:
+    for config_type in ['scannet', 'scannet_filter_0.5']:
         main(config_type)
