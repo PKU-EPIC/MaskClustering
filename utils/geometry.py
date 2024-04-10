@@ -1,5 +1,11 @@
 import numpy as np
 
+def judge_bbox_overlay(bbox_1, bbox_2):
+    for i in range(3):
+        if bbox_1[0][i] > bbox_2[1][i] or bbox_2[0][i] > bbox_1[1][i]:
+            return False
+    return True
+
 def denoise(pcd):
     labels = np.array(pcd.cluster_dbscan(eps=0.04, min_points=4)) + 1 # -1 for noise
     mask = np.ones(len(labels), dtype=bool)
