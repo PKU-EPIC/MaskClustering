@@ -27,13 +27,10 @@ class ScanNetDataset:
         image_list = image_list[::stride]
         return image_list
     
-    def get_frame_list(self, start, end, stride):
-        if end < 0: # full video
-            end = self.get_video_end() + 1
-        else:
-            end = min(self.get_video_end() + 1, end)
-        frame_id_list = np.arange(start, end, stride)
-        return frame_id_list
+    def get_frame_list(self, stride):
+        end = self.get_video_end() + 1
+        frame_id_list = np.arange(0, end, stride)
+        return list(frame_id_list)
     
     def get_intrinsics(self, frame_id):
         import json
@@ -76,10 +73,10 @@ class ScanNetDataset:
         label_features_dict = np.load(f'data/text_features/scannet.npy', allow_pickle=True).item()
         return label_features_dict
 
-    def get_total_vertex_num(self):
+    def get_scene_points(self):
         mesh = o3d.io.read_triangle_mesh(self.mesh_path)
         vertices = np.asarray(mesh.vertices)
-        return len(vertices)
+        return vertices
     
     def get_label_id(self):
         self.class_id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 26, 27, 28, 29, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 54, 55, 56, 57, 58, 59, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 82, 84, 86, 87, 88, 89, 90, 93, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 110, 112, 115, 116, 118, 120, 121, 122, 125, 128, 130, 131, 132, 134, 136, 138, 139, 140, 141, 145, 148, 154, 155, 156, 157, 159, 161, 163, 165, 166, 168, 169, 170, 177, 180, 185, 188, 191, 193, 195, 202, 208, 213, 214, 221, 229, 230, 232, 233, 242, 250, 261, 264, 276, 283, 286, 300, 304, 312, 323, 325, 331, 342, 356, 370, 392, 395, 399, 408, 417, 488, 540, 562, 570, 572, 581, 609, 748, 776, 1156, 1163, 1164, 1165, 1166, 1167, 1168, 1169, 1170, 1171, 1172, 1173, 1174, 1175, 1176, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186, 1187, 1188, 1189, 1190, 1191]

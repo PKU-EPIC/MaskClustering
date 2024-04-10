@@ -41,13 +41,10 @@ class MatterportDataset:
         image_list = image_list[::stride]
         return image_list
     
-    def get_frame_list(self, start, end, stride):
-        if end < 0: # full video
-            end = self.get_video_end() + 1
-        else:
-            end = min(self.get_video_end() + 1, end)
-        frame_id_list = np.arange(start, end, stride)
-        return frame_id_list
+    def get_frame_list(self, step):
+        end = self.get_video_end() + 1
+        frame_id_list = np.arange(0, end, step)
+        return list(frame_id_list)
     
     def _obtain_intr_extr_matterport(self):
         '''Obtain the intrinsic and extrinsic parameters of Matterport3D.'''
@@ -123,10 +120,10 @@ class MatterportDataset:
         label_features_dict = np.load(f'data/text_features/matterport3d.npy', allow_pickle=True).item()
         return label_features_dict
 
-    def get_total_vertex_num(self):
+    def get_scene_points(self):
         mesh = o3d.io.read_triangle_mesh(self.mesh_path)
         vertices = np.asarray(mesh.vertices)
-        return len(vertices)
+        return vertices
 
     def get_gt_labels(self):
         raise NotImplementedError

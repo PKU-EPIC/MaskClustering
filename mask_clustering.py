@@ -33,16 +33,14 @@ class Segment:
             son_node_info.add(segment.node_info)
         return Segment(mask_list, frame_one_hot.float(), frame_mask_one_hot.float(), complete_vertex_index, node_info, son_node_info)
     
-    def get_complete_pcld(self, coarse_points, coarse_colors):
+    def get_complete_pcld(self, scene_points):
         complete_index_list = list(self.complete_vertex_index)
-        points = coarse_points[complete_index_list]
-        colors = coarse_colors[complete_index_list]
+        points = scene_points[complete_index_list]
         pcld = o3d.geometry.PointCloud()
         pcld.points = o3d.utility.Vector3dVector(points)
-        pcld.colors = o3d.utility.Vector3dVector(colors)
         return pcld, complete_index_list
 
-def build_raw_matrix(scene_points, coarse_points_num, frame_list, dataset):
+def build_raw_matrix(scene_points, frame_list, dataset):
     '''
         Iterate over all masks to build the raw point mask matrix where M[i,j] stores the mask id for point i in frame j
         If point i is not in any mask in frame j, M[i,j] = 0. (Note that mask id starts from 1).
@@ -52,11 +50,12 @@ def build_raw_matrix(scene_points, coarse_points_num, frame_list, dataset):
         At each frame, we maintain a frame_boundary_point_index to record all boundary points in this frame and set the mask id of these points to 0.
     '''
     
+    scene_points_num = len(scene_points)
     scene_points = torch.tensor(scene_points).float().cuda()
     total_frame = len(frame_list)
     boundary_point_index = set()
-    point_mask_matrix = np.zeros((coarse_points_num, total_frame), dtype=np.uint16)
-    coarse_point_frame_matrix = np.zeros((coarse_points_num, total_frame), dtype=bool)
+    point_mask_matrix = np.zeros((scene_points_num, total_frame), dtype=np.uint16)
+    coarse_point_frame_matrix = np.zeros((scene_points_num, total_frame), dtype=bool)
     frame_mask_list = []
 
     mask_complete_vertex_index = {}
@@ -166,11 +165,20 @@ def remove_undersegment_mask(frame_list, frame_mask_list, point_mask_matrix, inv
 
     return mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids
 
-def get_third_view_num_list(mask_project_on_all_frames):
-    third_view_num_matrix = torch.matmul(mask_project_on_all_frames, mask_project_on_all_frames.transpose(0,1))
-    third_view_num_list = third_view_num_matrix.flatten()
-    third_view_num_list = third_view_num_list[third_view_num_list > 0]
-    return third_view_num_list.cpu().numpy()
+def get_observer_num_thresholds(mask_project_on_all_frames):
+    observer_num_matrix = torch.matmul(mask_project_on_all_frames, mask_project_on_all_frames.transpose(0,1))
+    observer_num_list = observer_num_matrix.flatten()
+    observer_num_list = observer_num_list[observer_num_list > 0].cpu().numpy()
+    observer_num_thresholds = []
+    for percentile in range(95, -5, -5):
+        observer_num = np.percentile(observer_num_list, percentile)
+        if observer_num <= 1:
+            if percentile < 50:
+                break
+            else:
+                observer_num = 1
+        observer_num_thresholds.append(observer_num)
+    return observer_num_thresholds
 
 def prepare_raw_segment_list(frame_mask_list, mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids, mask_complete_vertex_index):
     raw_to_be_processed = []
@@ -211,19 +219,11 @@ def merge_into_new_segment_list(level, old_segment_list, graph):
         segment_list.append(Segment.create_segment_from_list([old_segment_list[node] for node in component], node_info))
     return segment_list
 
-def mask_association(raw_to_be_processed, third_view_num_list, SEGMENT_CONNECT_RATIO, debug):
+def mask_association(raw_to_be_processed, observer_num_thresholds, SEGMENT_CONNECT_RATIO, debug):
     segment_list = raw_to_be_processed
-    for i, percentile in enumerate(range(95, -5, -5)):
-        third_view_num = np.percentile(third_view_num_list, percentile)
-        if third_view_num <= 1:
-            if percentile < 50:
-                break
-            else:
-                third_view_num = 1
-        if debug:
-            print('third_view_num', third_view_num, 'number of nodes', len(segment_list))
-
-        graph = build_graph(segment_list, third_view_num, SEGMENT_CONNECT_RATIO)
+    for observer_num_threshold in observer_num_thresholds:
+        print('observer_num', observer_num_threshold, 'number of nodes', len(segment_list))
+        graph = build_graph(segment_list, observer_num_threshold, SEGMENT_CONNECT_RATIO)
         segment_list = merge_into_new_segment_list(i+1, segment_list, graph)
     return segment_list
 
@@ -344,7 +344,7 @@ def find_represent_mask(mask_info_list):
     mask_info_list.sort(key=lambda x: x[2], reverse=True)
     return mask_info_list[:5]
 
-def export_objects(dataset, segment_list, mask_complete_vertex_index, coarse_points, coarse_colors, coarse_point_frame_matrix, frame_list, args):
+def export_objects(dataset, segment_list, mask_complete_vertex_index, scene_points, coarse_point_frame_matrix, frame_list, args):
     total_pcld_list = []
     total_pcld_index_list = []
     total_pcld_bbox_list = []
@@ -354,7 +354,7 @@ def export_objects(dataset, segment_list, mask_complete_vertex_index, coarse_poi
         if len(segment.mask_list) < 2:
             continue
         
-        pcld, complete_index_list = segment.get_complete_pcld(coarse_points, coarse_colors)
+        pcld, complete_index_list = segment.get_complete_pcld(scene_points)
         object_pcld_list, object_pcld_coarse_index_list = dbscan_process(pcld, complete_index_list, args.dbscan_threshold)
 
         object_pcld_list, object_pcld_coarse_index_list, object_bbox_list, object_mask_list = point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, object_pcld_list, object_pcld_coarse_index_list, mask_complete_vertex_index, frame_list, args)
@@ -373,41 +373,38 @@ def export_objects(dataset, segment_list, mask_complete_vertex_index, coarse_poi
             'mask_list': pcld_mask_list,
             'repre_mask_list': find_represent_mask(pcld_mask_list),
         }
+    os.makedirs(os.path.join(dataset.object_dict_dir, args.config), exist_ok=True)
     np.save(os.path.join(dataset.object_dict_dir, args.config, f'object_dict.npy'), object_dict, allow_pickle=True)
     return
 
+def mask_graph_construction(args, scene_points, frame_list, dataset):
+    if args.debug:
+        print('start building point mask matrix')
+    boundary_point_index, point_mask_matrix, mask_complete_vertex_index, coarse_point_frame_matrix, frame_mask_list = build_raw_matrix(scene_points, frame_list, dataset)
+    
+    mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids = remove_undersegment_mask(frame_list, frame_mask_list, point_mask_matrix, boundary_point_index, mask_complete_vertex_index, args)
+    observer_num_thresholds = get_observer_num_thresholds(mask_project_on_all_frames)
+    if args.debug:
+        print('start prepare raw segment list')
+    raw_to_be_processed = prepare_raw_segment_list(frame_mask_list, mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids, mask_complete_vertex_index)
+
+    return raw_to_be_processed, observer_num_thresholds, mask_complete_vertex_index, coarse_point_frame_matrix
+
 def main(args):
     dataset = get_dataset(args)
-    # if os.path.exists(os.path.join(dataset.object_dict_dir, args.config, f'object_dict.npy')):
-    #     return
+    scene_points = dataset.get_scene_points()
+    frame_list = dataset.get_frame_list(args.step)
 
-    coarse_pcld = o3d.io.read_point_cloud(dataset.mesh_path)
-    coarse_points = np.asarray(coarse_pcld.points)
-    coarse_colors = np.zeros_like(coarse_points)
-
-    os.makedirs(os.path.join(dataset.object_dict_dir, args.config), exist_ok=True)
-
-    frame_list = list(dataset.get_frame_list(0, -1, args.step))
-    if args.debug:
-        print('start building point_mask_matrix')
-    boundary_point_index, point_mask_matrix, mask_complete_vertex_index, coarse_point_frame_matrix, frame_mask_list = build_raw_matrix(coarse_points, len(coarse_points), frame_list, dataset)
-    invalid_point_set = boundary_point_index
-    if args.debug:
-        print('start removing undersegment mask')
-    
     with torch.no_grad():
-        mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids = remove_undersegment_mask(frame_list, frame_mask_list, point_mask_matrix, invalid_point_set, mask_complete_vertex_index, args)
-        third_view_num_list = get_third_view_num_list(mask_project_on_all_frames)
-        if args.debug:
-            print('start prepare raw segment list')
-        raw_to_be_processed = prepare_raw_segment_list(frame_mask_list, mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids, mask_complete_vertex_index)
+        raw_to_be_processed, observer_num_thresholds, mask_complete_vertex_index, coarse_point_frame_matrix = mask_graph_construction(args, scene_points, frame_list, dataset)
+
         if args.debug:
             print('start associate mask')
-        object_list = mask_association(raw_to_be_processed, third_view_num_list, args.segment_connect_ratio, args.debug)
+        object_list = mask_association(raw_to_be_processed, observer_num_thresholds, args.segment_connect_ratio, args.debug)
 
         if args.debug:
             print('start exporting')
-        export_objects(dataset, object_list, mask_complete_vertex_index, coarse_points, coarse_colors, coarse_point_frame_matrix, frame_list, args)
+        export_objects(dataset, object_list, mask_complete_vertex_index, scene_points, coarse_point_frame_matrix, frame_list, args)
 
 if __name__ == '__main__':
     import time

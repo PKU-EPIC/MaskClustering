@@ -141,7 +141,7 @@ class ScanNetPPDataset:
         self.extrinsics = extrinsics
         self.intrinsics = intrinsics
     
-    def get_frame_list(self, start, end, stride):
+    def get_frame_list(self, stride):
         return self.frame_id_list
     
     def get_intrinsics(self, frame_id):
@@ -170,10 +170,10 @@ class ScanNetPPDataset:
         #     rgb = cv2.resize(rgb, (256, 192))
         return rgb    
 
-    def get_total_vertex_num(self):
+    def get_scene_points(self):
         mesh = o3d.io.read_point_cloud(self.mesh_path)
         vertices = np.asarray(mesh.points)
-        return len(vertices)
+        return vertices
     
     def get_frame_path(self, frame_id):
         rgb_path = os.path.join(self.rgb_dir, 'frame_%06d.jpg' % frame_id)

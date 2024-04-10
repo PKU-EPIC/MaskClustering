@@ -7,7 +7,7 @@ import numpy as np
 
 def main(args):
     dataset = get_dataset(args)
-    total_vertex_num = dataset.get_total_vertex_num()
+    total_vertex_num = dataset.get_scene_points().shape[0]
 
     label_features_dict = dataset.get_label_features()
     label_text_features = np.stack(list(label_features_dict.values()))
