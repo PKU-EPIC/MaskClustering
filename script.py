@@ -52,7 +52,7 @@ def main(args):
     cuda_list = [0, 1]
 
     t0 = time.time()
-    seq_name_list = get_seq_name_list(dataset)[:2]
+    seq_name_list = get_seq_name_list(dataset)#[:2]
     print('There are %d scenes' % len(seq_name_list))
     
     # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern}', 'predict mask', 'cuda', cuda_list, seq_name_list)

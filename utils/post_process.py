@@ -37,7 +37,7 @@ def merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld
 
 
 def point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, object_pcld_list, object_pcld_coarse_index_list, mask_point_clouds, frame_list, args):
-    segment_global_frame_id_list = torch.where(segment.frame)[0].cpu().numpy()
+    segment_global_frame_id_list = torch.where(segment.visible_frame)[0].cpu().numpy()
     segment_frame_id_list = np.array(frame_list)[segment_global_frame_id_list]
     mask_list = segment.mask_list
 
@@ -151,5 +151,5 @@ def export_objects(dataset, segment_list, mask_point_clouds, scene_points, coars
             'repre_mask_list': find_represent_mask(pcld_mask_list),
         }
     os.makedirs(os.path.join(dataset.object_dict_dir, args.config), exist_ok=True)
-    np.save(os.path.join(dataset.object_dict_dir, args.config, f'object_dict.npy'), object_dict, allow_pickle=True)
+    np.save(os.path.join(dataset.object_dict_dir, args.config, 'object_dict.npy'), object_dict, allow_pickle=True)
     return

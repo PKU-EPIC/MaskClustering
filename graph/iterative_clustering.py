@@ -2,39 +2,43 @@ import networkx as nx
 from graph.node import Node
 import torch
 
-def merge_into_new_nodes(level, old_nodes, graph):
-    nodes = []
+def cluster_into_new_nodes(level, old_nodes, graph):
+    new_nodes = []
     for component in nx.connected_components(graph):
-        node_info = (level, len(nodes))
-        nodes.append(Node.create_segment_from_list([old_nodes[node] for node in component], node_info))
-    return nodes
+        node_info = (level, len(new_nodes))
+        new_nodes.append(Node.create_node_from_list([old_nodes[node] for node in component], node_info))
+    return new_nodes
 
 
-def update_graph(nodes, third_view_num, SEGMENT_CONNECT_RATIO):
-    segment_frame_matrix = torch.stack([segment.frame for segment in nodes], dim=0)
-    segment_frame_mask_matrix = torch.stack([segment.frame_mask for segment in nodes], dim=0)
+def update_graph(nodes, observer_num_threshold, connect_threshold):
+    '''
+        update view consensus rates between nodes and return a new graph
+    '''
+    node_visible_frames = torch.stack([node.visible_frame for node in nodes], dim=0)
+    node_contained_masks = torch.stack([node.contained_mask for node in nodes], dim=0)
 
-    same_frame_matrix = torch.matmul(segment_frame_matrix, segment_frame_matrix.transpose(0,1))
-    same_frame_mask_matrix = torch.matmul(segment_frame_mask_matrix, segment_frame_mask_matrix.transpose(0,1))
+    observer_nums = torch.matmul(node_visible_frames, node_visible_frames.transpose(0,1)) # M[i,j] stores the number of frames that node i and node j both appear
+    supporter_nums = torch.matmul(node_contained_masks, node_contained_masks.transpose(0,1)) # M[i,j] stores the number of frames that supports the merging of node i and node j
 
-    disconnect_mask = torch.eye(len(nodes), dtype=bool).cuda()
-    disconnect_mask = disconnect_mask | (same_frame_matrix < third_view_num)
+    view_concensus_rate = supporter_nums / (observer_nums + 1e-7)
 
-    concensus_rate = same_frame_mask_matrix / (same_frame_matrix + 1e-7)
-    A = concensus_rate >= SEGMENT_CONNECT_RATIO
-    A = A & ~disconnect_mask
+    disconnect = torch.eye(len(nodes), dtype=bool).cuda()
+    disconnect = disconnect | (observer_nums < observer_num_threshold) # node pairs with less than observer_num_threshold observers are disconnected
+
+    A = view_concensus_rate >= connect_threshold
+    A = A & ~disconnect
     A = A.cpu().numpy()
 
     G = nx.from_numpy_array(A)
     return G
 
 
-def iterative_clustering(nodes, observer_num_thresholds, SEGMENT_CONNECT_RATIO, debug):
+def iterative_clustering(nodes, observer_num_thresholds, connect_threshold, debug):
     if debug:
         print('====> Start iterative clustering')
-    for i, observer_num_threshold in enumerate(observer_num_thresholds):
+    for iterate_id, observer_num_threshold in enumerate(observer_num_thresholds):
         if debug:
-            print('observer_num', observer_num_threshold, 'number of nodes', len(nodes))
-        graph = update_graph(nodes, observer_num_threshold, SEGMENT_CONNECT_RATIO)
-        nodes = merge_into_new_nodes(i+1, nodes, graph)
+            print(f'Iterate {iterate_id}: observer_num', observer_num_threshold, ', number of nodes', len(nodes))
+        graph = update_graph(nodes, observer_num_threshold, connect_threshold)
+        nodes = cluster_into_new_nodes(iterate_id+1, nodes, graph)
     return nodes

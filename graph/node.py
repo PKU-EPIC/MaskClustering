@@ -2,16 +2,16 @@ import torch
 import open3d as o3d
 
 class Node:
-    def __init__(self, mask_list, frame, frame_mask, complete_vertex_index, node_info, son_node_info):
+    def __init__(self, mask_list, visible_frame, contained_mask, complete_vertex_index, node_info, son_node_info):
         self.mask_list = mask_list
-        self.frame = frame # one-hot vector
-        self.frame_mask = frame_mask # one-hot vector
+        self.visible_frame = visible_frame # one-hot vector
+        self.contained_mask = contained_mask # one-hot vector
         self.complete_vertex_index = complete_vertex_index
         self.node_info = node_info
         self.son_node_info = son_node_info
     
     @ staticmethod
-    def create_segment_from_list(segment_list, node_info):
+    def create_node_from_list(segment_list, node_info):
         mask_list = []
         frame_one_hot = torch.zeros(len(segment_list[0].frame), dtype=bool).cuda()
         frame_mask_one_hot = torch.zeros(len(segment_list[0].frame_mask), dtype=bool).cuda()
