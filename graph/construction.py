@@ -5,72 +5,80 @@ from utils.mask_backprojection import frame_backprojection
 from graph.node import Node
 
 def mask_graph_construction(args, scene_points, frame_list, dataset):
+    '''
+        Construct the mask graph:
+        1. Build the point in mask matrix. (To speed up the following computation of view consensus rate.)
+        2. For each mask, compute the frames that it appears and the masks that contains it. Concurrently, we judge whether this mask is undersegmented.
+        3. Build the nodes in the graph.
+    '''
     if args.debug:
         print('start building point in mask matrix')
-    boundary_points, point_mask_matrix, mask_point_clouds, coarse_point_frame_matrix, frame_mask_list = build_point_in_mask_matrix(args, scene_points, frame_list, dataset)
-    
-    mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids = process_mask(frame_list, frame_mask_list, point_mask_matrix, boundary_points, mask_point_clouds, args)
-    observer_num_thresholds = get_observer_num_thresholds(mask_project_on_all_frames)
-
-    nodes = get_nodes(frame_mask_list, mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids, mask_point_clouds)
-
-    return nodes, observer_num_thresholds, mask_point_clouds, coarse_point_frame_matrix
+    boundary_points, point_in_mask_matrix, mask_point_clouds, point_frame_matrix, global_frame_mask_list = build_point_in_mask_matrix(args, scene_points, frame_list, dataset)
+    visible_frames, contained_masks, undersegment_mask_ids = process_masks(frame_list, global_frame_mask_list, point_in_mask_matrix, boundary_points, mask_point_clouds, args)
+    observer_num_thresholds = get_observer_num_thresholds(visible_frames)
+    nodes = init_nodes(global_frame_mask_list, visible_frames, contained_masks, undersegment_mask_ids, mask_point_clouds)
+    return nodes, observer_num_thresholds, mask_point_clouds, point_frame_matrix
 
 def build_point_in_mask_matrix(args, scene_points, frame_list, dataset):
     '''
-        To speed up the view consensus rate computation, we build a 'point in mask' matrix by a trade-off of space for time. This matrix is of size (scene_points_num, total_frame). For point i and frame j, if point i is in the k-th mask in frame j, then M[i,j] = k. Otherwise, M[i,j] = 0. (Note that mask id starts from 1).
+        To speed up the view consensus rate computation, we build a 'point in mask' matrix by a trade-off of space for time. This matrix is of size (scene_points_num, frame_num). For point i and frame j, if point i is in the k-th mask in frame j, then M[i,j] = k. Otherwise, M[i,j] = 0. (Note that mask id starts from 1).
 
-        We also build a coarse_point_frame_matrix where P[i,j] stores the number of masks that point i appears in frame j. This matrix is used to decide whether a point is a boundary point.
-
-        At each frame, we maintain a frame_boundary_point_index to record all boundary points in this frame and set the mask id of these points to 0.
+        Returns:
+            boundary_points: a set of points that are contained by multiple masks in a frame and thus are on the boundary of the masks. We will not consider these points in the following computation of view consensus rate.
+            point_in_mask_matrix: the 'point in mask' matrix.
+            mask_point_clouds: a dict where each key is the mask id in a frame, and the value is the point ids that are in this mask.
+            point_frame_matrix: a matrix of size (scene_points_num, frame_num). For point i and frame j, if point i is visible in frame j, then M[i,j] = True. Otherwise, M[i,j] = False.
+            global_frame_mask_list: a list of masks in the whole sequence. Each tuple contains the frame id and the mask id in this frame.
     '''
     
     scene_points_num = len(scene_points)
-    scene_points = torch.tensor(scene_points).float().cuda()
-    total_frame = len(frame_list)
-    boundary_points = set()
-    point_mask_matrix = np.zeros((scene_points_num, total_frame), dtype=np.uint16)
-    coarse_point_frame_matrix = np.zeros((scene_points_num, total_frame), dtype=bool)
-    frame_mask_list = []
+    frame_num = len(frame_list)
 
+    scene_points = torch.tensor(scene_points).float().cuda()
+    boundary_points = set()
+    point_in_mask_matrix = np.zeros((scene_points_num, frame_num), dtype=np.uint16)
+    point_frame_matrix = np.zeros((scene_points_num, frame_num), dtype=bool)
+    global_frame_mask_list = []
     mask_point_clouds = {}
     
     iterator = tqdm(enumerate(frame_list), total=len(frame_list)) if args.debug else enumerate(frame_list)
-    
     for frame_cnt, frame_id in iterator:
         mask_dict, frame_point_cloud_ids = frame_backprojection(dataset, scene_points, frame_id)
         if len(frame_point_cloud_ids) == 0:
             continue
-        coarse_point_frame_matrix[frame_point_cloud_ids, frame_cnt] = True
+        point_frame_matrix[frame_point_cloud_ids, frame_cnt] = True
         appeared_vertex_index = set()
         frame_boundary_point_index = set()
         for mask_id, mask_point_cloud_ids in mask_dict.items():
             frame_boundary_point_index.update(mask_point_cloud_ids.intersection(appeared_vertex_index))
             mask_point_clouds[f'{frame_id}_{mask_id}'] = mask_point_cloud_ids
-            point_mask_matrix[list(mask_point_cloud_ids), frame_cnt] = mask_id
+            point_in_mask_matrix[list(mask_point_cloud_ids), frame_cnt] = mask_id
             appeared_vertex_index.update(mask_point_cloud_ids)
-            frame_mask_list.append((frame_id, mask_id))
-        point_mask_matrix[list(frame_boundary_point_index), frame_cnt] = 0
+            global_frame_mask_list.append((frame_id, mask_id))
+        point_in_mask_matrix[list(frame_boundary_point_index), frame_cnt] = 0
         boundary_points.update(frame_boundary_point_index)
     
-    return boundary_points, point_mask_matrix, mask_point_clouds, coarse_point_frame_matrix, frame_mask_list
+    return boundary_points, point_in_mask_matrix, mask_point_clouds, point_frame_matrix, global_frame_mask_list
 
-def get_nodes(frame_mask_list, mask_project_on_all_frames, mask_project_on_all_frame_masks, undersegment_mask_ids, mask_point_clouds):
+def init_nodes(global_frame_mask_list, mask_project_on_all_frames, contained_masks, undersegment_mask_ids, mask_point_clouds):
     raw_to_be_processed = []
-    for global_mask_id, (frame_id, mask_id) in enumerate(frame_mask_list):
+    for global_mask_id, (frame_id, mask_id) in enumerate(global_frame_mask_list):
         if global_mask_id in undersegment_mask_ids:
             continue
         mask_list = [(frame_id, mask_id)]
         frame = mask_project_on_all_frames[global_mask_id]
-        frame_mask = mask_project_on_all_frame_masks[global_mask_id]
+        frame_mask = contained_masks[global_mask_id]
         complete_vertex_index = mask_point_clouds[f'{frame_id}_{mask_id}']
         node_info = (0, len(raw_to_be_processed))
         segment = Node(mask_list, frame, frame_mask, complete_vertex_index, node_info, None)
         raw_to_be_processed.append(segment)
     return raw_to_be_processed
 
-def get_observer_num_thresholds(mask_project_on_all_frames):
-    observer_num_matrix = torch.matmul(mask_project_on_all_frames, mask_project_on_all_frames.transpose(0,1))
+def get_observer_num_thresholds(visible_frames):
+    '''
+        Compute the observer number thresholds for each iteration. Range from 95% to 0%.
+    '''
+    observer_num_matrix = torch.matmul(visible_frames, visible_frames.transpose(0,1))
     observer_num_list = observer_num_matrix.flatten()
     observer_num_list = observer_num_list[observer_num_list > 0].cpu().numpy()
     observer_num_thresholds = []
@@ -84,81 +92,69 @@ def get_observer_num_thresholds(mask_project_on_all_frames):
         observer_num_thresholds.append(observer_num)
     return observer_num_thresholds
 
-def project_one_mask_on_all_frames(point_mask_matrix, invalid_point_set, frame_id, mask_id, mask_point_clouds, frame_list, frame_mask_list, args):
+def process_one_mask(point_in_mask_matrix, boundary_points, mask_point_cloud, frame_list, global_frame_mask_list, args):
     '''
-        This function judges whether a mask is undersegment and returns its corresponding mask id in other frames
+        For a mask, compute the frames that it is visible and the masks that contains it.
     '''
-    frame_one_hot = torch.zeros(len(frame_list))
-    frame_mask_one_hot = torch.zeros(len(frame_mask_list))
+    visible_frame = torch.zeros(len(frame_list))
+    contained_mask = torch.zeros(len(global_frame_mask_list))
+
+    valid_mask_point_cloud = mask_point_cloud - boundary_points
+    mask_point_cloud_info = point_in_mask_matrix[list(valid_mask_point_cloud), :]
     
-    mask_vertex_index = mask_point_clouds[f'{frame_id}_{mask_id}']
-    valid_mask_vertex_index = mask_vertex_index - invalid_point_set
-    project_on_all_frames = point_mask_matrix[list(valid_mask_vertex_index), :]
-    
-    possible_frames_list = np.where(np.sum(project_on_all_frames, axis=0) > 0)[0]
+    possibly_visible_frames = np.where(np.sum(mask_point_cloud_info, axis=0) > 0)[0]
 
     split_num = 0
-    appear_num = 0
+    visible_num = 0
     
-    for frame_cnt in possible_frames_list:
-        mask_id_count = np.bincount(project_on_all_frames[:, frame_cnt])
-        disappear_ratio = mask_id_count[0] / np.sum(mask_id_count)
-        # If in a frame, most of the points in the mask are missing, then we simply ignore this frame
-        if disappear_ratio > args.mask_disappear_ratio and (np.sum(mask_id_count) - mask_id_count[0]) < args.mask_disappear_num:
+    for frame_id in possibly_visible_frames:
+        mask_id_count = np.bincount(mask_point_cloud_info[:, frame_id])
+        invisible_ratio = mask_id_count[0] / np.sum(mask_id_count) # 0 means that this point is invisible in this frame
+        # If in a frame, most points in this mask are missing, then we think this mask is invisible in this frame.
+        if invisible_ratio > args.mask_disappear_ratio and (np.sum(mask_id_count) - mask_id_count[0]) < args.mask_disappear_num:
             continue
-        appear_num += 1
-        mask_id_count[0] = 0
+        visible_num += 1
         max_mask_id = np.argmax(mask_id_count)
-        ratio = mask_id_count[max_mask_id] / np.sum(mask_id_count)
-        if ratio > args.valid_mask_ratio:
-            frame_one_hot[frame_cnt] = 1
-            frame_mask_idx = frame_mask_list.index((frame_list[frame_cnt], max_mask_id))
-            frame_mask_one_hot[frame_mask_idx] = 1
+        contained_ratio = mask_id_count[max_mask_id] / np.sum(mask_id_count[1:])
+        if contained_ratio > args.valid_mask_ratio:
+            visible_frame[frame_id] = 1
+            frame_mask_idx = global_frame_mask_list.index((frame_list[frame_id], max_mask_id))
+            contained_mask[frame_mask_idx] = 1
         else:
-            split_num += 1
-
-    if appear_num == 0:
-        return False, frame_one_hot, frame_mask_one_hot
+            split_num += 1 # This mask is splitted into two masks in this frame
     
-    invalid_ratio = split_num / appear_num
-
-    if invalid_ratio > args.undersegment_mask_ratio:
-        return False, frame_one_hot, frame_mask_one_hot
+    if visible_num == 0 or split_num / visible_num > args.undersegment_mask_ratio:
+        return False, visible_frame, contained_mask
     else:
-        return True, frame_one_hot, frame_mask_one_hot
+        return True, visible_frame, contained_mask
 
-def process_mask(frame_list, frame_mask_list, point_mask_matrix, invalid_point_set, mask_point_clouds, args):
+def process_masks(frame_list, global_frame_mask_list, point_in_mask_matrix, boundary_points, mask_point_clouds, args):
     '''
-        mask_project_on_all_frames: a dict where each key is the global mask id, i.e., '{frame_id}_{mask_id}'. Each value contains two elements, frame and frame_mask, the former records what frames this key appears, the latter records what the corresponding mask id in these frames.
-            example: '100_10': ((0,10,500), ((0,1), (10,2), (500,9)))
+        For each mask, compute the frames that it is visible and the masks that contains it. 
+        Meanwhile, we judge whether this mask is undersegmented.
     '''
-    visible_frame_list = []
-    mask_project_on_all_frame_masks = []
-
-    # find all undersegment masks and build mask_project_on_all_frames
+    visible_frames = []
+    contained_masks = []
     undersegment_mask_ids = []
-    if args.debug:
-        iterator = tqdm(frame_mask_list)
-    else:
-        iterator = frame_mask_list
 
+    iterator = tqdm(global_frame_mask_list) if args.debug else global_frame_mask_list
     for frame_id, mask_id in iterator:
-        valid, frame_one_hot, frame_mask_one_hot = project_one_mask_on_all_frames(point_mask_matrix, invalid_point_set, frame_id, mask_id, mask_point_clouds, frame_list, frame_mask_list, args)
-        visible_frame_list.append(frame_one_hot)
-        mask_project_on_all_frame_masks.append(frame_mask_one_hot)
+        valid, visible_frame, contained_mask = process_one_mask(point_in_mask_matrix, boundary_points, mask_point_clouds[f'{frame_id}_{mask_id}'], frame_list, global_frame_mask_list, args)
+        visible_frames.append(visible_frame)
+        contained_masks.append(contained_mask)
         if not valid:
-            global_mask_id = frame_mask_list.index((frame_id, mask_id))
+            global_mask_id = global_frame_mask_list.index((frame_id, mask_id))
             undersegment_mask_ids.append(global_mask_id)
 
-    visible_frame_list = torch.stack(visible_frame_list, dim=0).cuda()
-    mask_project_on_all_frame_masks = torch.stack(mask_project_on_all_frame_masks, dim=0).cuda()
+    visible_frames = torch.stack(visible_frames, dim=0).cuda() # (mask_num, frame_num)
+    contained_masks = torch.stack(contained_masks, dim=0).cuda() # (mask_num, mask_num)
 
-    # remove undersegment masks
+    # Undo the effect of undersegment observer masks to avoid merging two objects that are actually separated
     for global_mask_id in undersegment_mask_ids:
-        frame_id, _ = frame_mask_list[global_mask_id]
+        frame_id, _ = global_frame_mask_list[global_mask_id]
         global_frame_id = frame_list.index(frame_id)
-        mask_projected_idx = torch.where(mask_project_on_all_frame_masks[:, global_mask_id])[0]
-        mask_project_on_all_frame_masks[:, global_mask_id] = False
-        visible_frame_list[mask_projected_idx, global_frame_id] = False
+        mask_projected_idx = torch.where(contained_masks[:, global_mask_id])[0]
+        contained_masks[:, global_mask_id] = False
+        visible_frames[mask_projected_idx, global_frame_id] = False
 
-    return visible_frame_list, mask_project_on_all_frame_masks, undersegment_mask_ids
+    return visible_frames, contained_masks, undersegment_mask_ids
