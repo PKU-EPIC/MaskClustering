@@ -183,6 +183,8 @@ class ScanNetPPDataset:
 
     def get_mask(self, frame_id):
         mask_image_path = os.path.join(self.mask_image_dir, 'frame_%06d.png' % frame_id)
+        if not os.path.exists(mask_image_path):
+            assert False, f"Mask image not found: {mask_image_path}"
         mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
         return mask_image
 

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import torch
-from utils.geometry import denoise, judge_bbox_overlay
+from utils.geometry import judge_bbox_overlay
 
 
 def merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld_bbox_list, total_object_mask_list, overlapping_ratio=0.8):
@@ -92,9 +92,9 @@ def point_filter_and_coverage_computing(coarse_point_frame_matrix, node, object_
     return filtered_object_pcld_list, filtered_object_pcld_coarse_index_list, filtered_object_bbox_list, filtered_object_mask_list
 
 
-def dbscan_process(pcld, complete_index_list, DBSCAN_THRESHOLD=0.2):
+def dbscan_process(pcld, complete_index_list, DBSCAN_THRESHOLD=0.1):
     '''
-        dbscan splitting
+        Following OVIR-3D, we use DBSCAN to split the disconnected point cloud into different objects.
     '''
     
     labels = np.array(pcld.cluster_dbscan(eps=DBSCAN_THRESHOLD, min_points=4)) + 1 # -1 for noise
@@ -119,9 +119,24 @@ def find_represent_mask(mask_info_list):
     return mask_info_list[:5]
 
 
+def export_class_agnostic_mask(total_vertex_num, args, class_agnostic_mask_list):
+    pred_dir = os.path.join('data/prediction', args.config)
+    os.makedirs(pred_dir, exist_ok=True)
+
+    num_instance = len(class_agnostic_mask_list)
+    pred_masks = np.stack(class_agnostic_mask_list, axis=1)
+    pred_dict = {
+        "pred_masks": pred_masks, 
+        "pred_score":  np.ones(num_instance),
+        "pred_classes" : np.zeros(num_instance, dtype=np.int32)
+    }
+    return pred_dict
+
+
 def export_objects(dataset, node_list, mask_point_clouds, scene_points, coarse_point_frame_matrix, frame_list, args):
     if args.debug:
         print('start exporting')
+    
     total_pcld_list = []
     total_pcld_index_list = []
     total_pcld_bbox_list = []
@@ -143,6 +158,8 @@ def export_objects(dataset, node_list, mask_point_clouds, scene_points, coarse_p
 
     total_pcld_list, total_pcld_index_list, total_pcld_mask_list = merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld_bbox_list, total_object_mask_list)
 
+    total_vertex_num = dataset.get_scene_points().shape[0]
+    class_agnostic_mask_list = []
     object_dict = {}
     for i, (pcld, vertex_index, pcld_mask_list) in enumerate(zip(total_pcld_list, total_pcld_index_list, total_pcld_mask_list)):
         object_dict[i] = {
@@ -150,6 +167,15 @@ def export_objects(dataset, node_list, mask_point_clouds, scene_points, coarse_p
             'mask_list': pcld_mask_list,
             'repre_mask_list': find_represent_mask(pcld_mask_list),
         }
+        binary_mask = np.zeros(total_vertex_num, dtype=bool)
+        binary_mask[list(vertex_index)] = True
+        class_agnostic_mask_list.append(binary_mask)
+
+    class_agnostic_object_dict = export_class_agnostic_mask(total_vertex_num, args, class_agnostic_mask_list)
+    class_agnostic_pred_dir = os.path.join('data/prediction', args.config + '_class_agnostic')
+    os.makedirs(class_agnostic_pred_dir, exist_ok=True)
+    np.savez(os.path.join(class_agnostic_pred_dir, f'{args.seq_name}.npz'), **class_agnostic_object_dict)
+
     os.makedirs(os.path.join(dataset.object_dict_dir, args.config), exist_ok=True)
     np.save(os.path.join(dataset.object_dict_dir, args.config, 'object_dict.npy'), object_dict, allow_pickle=True)
     return

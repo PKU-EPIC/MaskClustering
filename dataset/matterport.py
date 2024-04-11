@@ -103,6 +103,8 @@ class MatterportDataset:
     def get_mask(self, frame_id):
         frame_name = self.rgb_names[frame_id][:-4]
         mask_image_path = os.path.join(self.mask_image_dir, f'{frame_name}.png')
+        if not os.path.exists(mask_image_path):
+            assert False, f"Mask image not found: {mask_image_path}"
         mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
         return mask_image
 
@@ -121,7 +123,7 @@ class MatterportDataset:
 
     def get_scene_points(self):
         mesh = o3d.io.read_point_cloud(self.mesh_path)
-        vertices = np.asarray(mesh.vertices)
+        vertices = np.asarray(mesh.points)
         return vertices
 
 
