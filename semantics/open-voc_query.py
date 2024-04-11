@@ -7,7 +7,7 @@ import numpy as np
 
 def main(args):
     dataset = get_dataset(args)
-    total_vertex_num = dataset.get_scene_points().shape[0]
+    total_point_num = dataset.get_scene_points().shape[0]
 
     label_features_dict = dataset.get_label_features()
     label_text_features = np.stack(list(label_features_dict.values()))
@@ -22,7 +22,7 @@ def main(args):
 
     num_instance = len(object_dict)
     pred_dict = {
-        "pred_masks": np.zeros((total_vertex_num, num_instance), dtype=bool), 
+        "pred_masks": np.zeros((total_point_num, num_instance), dtype=bool), 
         "pred_score":  np.ones(num_instance),
         "pred_classes" : np.zeros(num_instance, dtype=np.int32)
     }
@@ -47,9 +47,9 @@ def main(args):
         label_id = label2id[descriptions[max_label_id]]
         pred_dict['pred_classes'][idx] = label_id
 
-        vertex_index = object_dict[key]['vertex_index']
-        binary_mask = np.zeros(total_vertex_num, dtype=bool)
-        binary_mask[list(vertex_index)] = True
+        point_ids = object_dict[key]['point_ids']
+        binary_mask = np.zeros(total_point_num, dtype=bool)
+        binary_mask[list(point_ids)] = True
         pred_dict['pred_masks'][:, idx] = binary_mask
 
     np.savez(f'{pred_dir}/{args.seq_name}.npz', **pred_dict) 

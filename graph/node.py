@@ -37,6 +37,11 @@ class Node:
         return Node(mask_list, visible_frame.float(), contained_mask.float(), point_ids, node_info, son_node_info)
     
     def get_point_cloud(self, scene_points):
+        '''
+            return:
+                pcld: open3d.geometry.PointCloud object, the point cloud of the node
+                point_ids: list of int, the corresponding 3D point ids of the node
+        '''
         point_ids = list(self.point_ids)
         points = scene_points[point_ids]
         pcld = o3d.geometry.PointCloud()

@@ -108,7 +108,7 @@ def turn_mask_to_point(dataset, scene_points, mask_image, frame_id):
 
     valid_mask_ids = []
     mask_info = {}
-    frame_vertex_index_set = set()
+    frame_point_ids = set()
 
     for i, mask_id in enumerate(initial_valid_mask_ids):
         mask_neighbor = neighbor_in_scene_pcld[i] # P, 20
@@ -124,12 +124,12 @@ def turn_mask_to_point(dataset, scene_points, mask_image, frame_id):
             continue
         valid_mask_ids.append(mask_id)
         mask_info[mask_id] = set(neighbor_in_complete_scene_points)
-        frame_vertex_index_set.update(mask_info[mask_id])
+        frame_point_ids.update(mask_info[mask_id])
 
-    return mask_info, valid_mask_ids, list(frame_vertex_index_set)
+    return mask_info, valid_mask_ids, list(frame_point_ids)
 
 
 def frame_backprojection(dataset, scene_points, frame_id):
     mask_image = dataset.get_mask(frame_id)
-    mask_info, _, frame_vertex_index_set = turn_mask_to_point(dataset, scene_points, mask_image, frame_id)
-    return mask_info, frame_vertex_index_set
+    mask_info, _, frame_point_ids = turn_mask_to_point(dataset, scene_points, mask_image, frame_id)
+    return mask_info, frame_point_ids

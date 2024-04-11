@@ -47,13 +47,13 @@ def build_point_in_mask_matrix(args, scene_points, frame_list, dataset):
         if len(frame_point_cloud_ids) == 0:
             continue
         point_frame_matrix[frame_point_cloud_ids, frame_cnt] = True
-        appeared_vertex_index = set()
+        appeared_point_ids = set()
         frame_boundary_point_index = set()
         for mask_id, mask_point_cloud_ids in mask_dict.items():
-            frame_boundary_point_index.update(mask_point_cloud_ids.intersection(appeared_vertex_index))
+            frame_boundary_point_index.update(mask_point_cloud_ids.intersection(appeared_point_ids))
             mask_point_clouds[f'{frame_id}_{mask_id}'] = mask_point_cloud_ids
             point_in_mask_matrix[list(mask_point_cloud_ids), frame_cnt] = mask_id
-            appeared_vertex_index.update(mask_point_cloud_ids)
+            appeared_point_ids.update(mask_point_cloud_ids)
             global_frame_mask_list.append((frame_id, mask_id))
         point_in_mask_matrix[list(frame_boundary_point_index), frame_cnt] = 0
         boundary_points.update(frame_boundary_point_index)
@@ -68,9 +68,9 @@ def init_nodes(global_frame_mask_list, mask_project_on_all_frames, contained_mas
         mask_list = [(frame_id, mask_id)]
         frame = mask_project_on_all_frames[global_mask_id]
         frame_mask = contained_masks[global_mask_id]
-        complete_vertex_index = mask_point_clouds[f'{frame_id}_{mask_id}']
+        point_ids = mask_point_clouds[f'{frame_id}_{mask_id}']
         node_info = (0, len(nodes))
-        node = Node(mask_list, frame, frame_mask, complete_vertex_index, node_info, None)
+        node = Node(mask_list, frame, frame_mask, point_ids, node_info, None)
         nodes.append(node)
     return nodes
 

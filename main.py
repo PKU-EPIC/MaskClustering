@@ -1,10 +1,9 @@
 import torch
 from utils.config import get_dataset, get_args
-from utils.post_process import export_objects
+from utils.post_process import post_process
 from graph.construction import mask_graph_construction
 from graph.iterative_clustering import iterative_clustering
 import sys
-import os
 
 def main(args):
     dataset = get_dataset(args)
@@ -18,7 +17,7 @@ def main(args):
 
         object_list = iterative_clustering(nodes, observer_num_thresholds, args.view_consensus_threshold, args.debug)
 
-        export_objects(dataset, object_list, mask_point_clouds, scene_points, point_frame_matrix, frame_list, args)
+        post_process(dataset, object_list, mask_point_clouds, scene_points, point_frame_matrix, frame_list, args)
 
 if __name__ == '__main__':
     import time
