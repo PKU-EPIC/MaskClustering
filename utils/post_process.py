@@ -28,9 +28,12 @@ def merge_overlapping_objects(total_point_ids_list, total_bbox_list, total_mask_
                 elif intersect / len(point_ids_j) > overlapping_ratio:
                     invalid_object[j] = True
 
-    valid_object_ids = np.where(~invalid_object)[0]
-    valid_point_ids_list = total_point_ids_list[valid_object_ids]
-    valid_pcld_mask_list = total_mask_list[valid_object_ids]
+    valid_point_ids_list = []
+    valid_pcld_mask_list = []
+    for i in range(total_object_num):
+        if not invalid_object[i]:
+            valid_point_ids_list.append(total_point_ids_list[i])
+            valid_pcld_mask_list.append(total_mask_list[i])
     return valid_point_ids_list, valid_pcld_mask_list
 
 
@@ -138,6 +141,7 @@ def export_class_agnostic_mask(args, class_agnostic_mask_list):
     }
     class_agnostic_pred_dir = os.path.join('data/prediction', args.config + '_class_agnostic')
     os.makedirs(class_agnostic_pred_dir, exist_ok=True)
+    print(class_agnostic_pred_dir)
     np.savez(os.path.join(class_agnostic_pred_dir, f'{args.seq_name}.npz'), **pred_dict)
     return
 
@@ -160,6 +164,8 @@ def export(dataset, total_point_ids_list, total_mask_list, args):
         binary_mask = np.zeros(total_point_num, dtype=bool)
         binary_mask[list(point_ids)] = True
         class_agnostic_mask_list.append(binary_mask)
+
+    export_class_agnostic_mask(args, class_agnostic_mask_list)
 
     os.makedirs(os.path.join(dataset.object_dict_dir, args.config), exist_ok=True)
     np.save(os.path.join(dataset.object_dict_dir, args.config, 'object_dict.npy'), object_dict, allow_pickle=True)

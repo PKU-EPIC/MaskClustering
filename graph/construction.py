@@ -134,6 +134,8 @@ def process_masks(frame_list, global_frame_mask_list, point_in_mask_matrix, boun
         For each mask, compute the frames that it is visible and the masks that contains it. 
         Meanwhile, we judge whether this mask is undersegmented.
     '''
+    if args.debug:
+        print('start processing masks')
     visible_frames = []
     contained_masks = []
     undersegment_mask_ids = []

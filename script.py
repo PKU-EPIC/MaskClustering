@@ -68,10 +68,10 @@ def main(args):
     seq_name_list = get_seq_name_list(dataset)
     print('There are %d scenes' % len(seq_name_list))
     
-    parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
+    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
-    parallel_compute(f'python main.py --config {config} --debug', 'mask clustering', 'cuda', cuda_list, seq_name_list)
-    os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config}_class_agnostic --gt_path {gt} --dataset {dataset} --no_class')
+    parallel_compute(f'python main.py --config {config}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
+    # os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config}_class_agnostic --gt_path {gt} --dataset {dataset} --no_class')
 
     parallel_compute(f'python -m semantics.get_open-voc_features --config {config}', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
 

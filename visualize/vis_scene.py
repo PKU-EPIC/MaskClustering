@@ -24,7 +24,9 @@ def main(args):
 
     v = viz.Visualizer()
 
+    # pred = np.load(f'data/prediction/{args.config}_class_agnostic/{args.seq_name}.npz')
     pred = np.load(f'data/prediction/{args.config}/{args.seq_name}.npz')
+
     masks = pred['pred_masks']
     num_instances = masks.shape[1]
     for idx in range(num_instances):
