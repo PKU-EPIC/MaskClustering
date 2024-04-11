@@ -36,19 +36,19 @@ def merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld
     return valid_pcld_list, valid_pcld_index_list, valid_pcld_mask_list
 
 
-def point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, object_pcld_list, object_pcld_coarse_index_list, mask_point_clouds, frame_list, args):
-    segment_global_frame_id_list = torch.where(segment.visible_frame)[0].cpu().numpy()
-    segment_frame_id_list = np.array(frame_list)[segment_global_frame_id_list]
-    mask_list = segment.mask_list
+def point_filter_and_coverage_computing(coarse_point_frame_matrix, node, object_pcld_list, object_pcld_coarse_index_list, mask_point_clouds, frame_list, args):
+    node_global_frame_id_list = torch.where(node.visible_frame)[0].cpu().numpy()
+    node_frame_id_list = np.array(frame_list)[node_global_frame_id_list]
+    mask_list = node.mask_list
 
     point_appear_matrix_list = []
-    point_within_segment_list = []
+    point_within_node_list = []
     for object_pcld_coarse_index in object_pcld_coarse_index_list:
         point_appear_matrix = coarse_point_frame_matrix[object_pcld_coarse_index, ]
-        point_appear_matrix = point_appear_matrix[:, segment_global_frame_id_list]
+        point_appear_matrix = point_appear_matrix[:, node_global_frame_id_list]
         point_appear_matrix_list.append(point_appear_matrix)
-        point_within_segment = np.zeros_like(point_appear_matrix, dtype=bool)
-        point_within_segment_list.append(point_within_segment)
+        point_within_node = np.zeros_like(point_appear_matrix, dtype=bool)
+        point_within_node_list.append(point_within_node)
 
     object_mask_list = []
     for _ in range(len(object_pcld_list)):
@@ -56,7 +56,7 @@ def point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, obje
 
     # compute mask coverage
     for frame_id, mask_id in (mask_list):
-        frame_id_in_list = np.where(segment_frame_id_list == frame_id)[0][0]
+        frame_id_in_list = np.where(node_frame_id_list == frame_id)[0][0]
 
         mask_vertex_idx = list(mask_point_clouds[f'{frame_id}_{mask_id}'])
         mask_coarse_vertex_idx = mask_vertex_idx
@@ -65,7 +65,7 @@ def point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, obje
         coverage_list = []
         for i, object_pcld_coarse_index in enumerate(object_pcld_coarse_index_list):
             indices = np.where(np.isin(object_pcld_coarse_index, mask_coarse_vertex_idx))[0]
-            point_within_segment_list[i][indices, frame_id_in_list] = True
+            point_within_node_list[i][indices, frame_id_in_list] = True
             if len(indices) > max_intersect:
                 max_intersect = len(indices)
                 max_match_object_idx = i
@@ -80,8 +80,8 @@ def point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, obje
     filtered_object_pcld_coarse_index_list = []
     filtered_object_mask_list = []
     filtered_object_bbox_list = []
-    for i, (point_appear_matrix, point_within_segment) in enumerate(zip(point_appear_matrix_list, point_within_segment_list)):
-        detection_ratio = np.sum(point_within_segment, axis=1) / np.sum(point_appear_matrix, axis=1) + 1e-6
+    for i, (point_appear_matrix, point_within_node) in enumerate(zip(point_appear_matrix_list, point_within_node_list)):
+        detection_ratio = np.sum(point_within_node, axis=1) / np.sum(point_appear_matrix, axis=1) + 1e-6
         valid_point_index = np.where(detection_ratio > args.point_filter_threshold)[0]
         if len(valid_point_index) == 0:
             continue
@@ -119,7 +119,7 @@ def find_represent_mask(mask_info_list):
     return mask_info_list[:5]
 
 
-def export_objects(dataset, segment_list, mask_point_clouds, scene_points, coarse_point_frame_matrix, frame_list, args):
+def export_objects(dataset, node_list, mask_point_clouds, scene_points, coarse_point_frame_matrix, frame_list, args):
     if args.debug:
         print('start exporting')
     total_pcld_list = []
@@ -127,14 +127,14 @@ def export_objects(dataset, segment_list, mask_point_clouds, scene_points, coars
     total_pcld_bbox_list = []
     total_object_mask_list = []
     
-    for i, segment in enumerate(segment_list):
-        if len(segment.mask_list) < 2:
+    for i, node in enumerate(node_list):
+        if len(node.mask_list) < 2:
             continue
         
-        pcld, point_ids = segment.get_point_cloud(scene_points)
+        pcld, point_ids = node.get_point_cloud(scene_points)
         object_pcld_list, object_pcld_coarse_index_list = dbscan_process(pcld, point_ids, args.dbscan_threshold)
 
-        object_pcld_list, object_pcld_coarse_index_list, object_bbox_list, object_mask_list = point_filter_and_coverage_computing(coarse_point_frame_matrix, segment, object_pcld_list, object_pcld_coarse_index_list, mask_point_clouds, frame_list, args)
+        object_pcld_list, object_pcld_coarse_index_list, object_bbox_list, object_mask_list = point_filter_and_coverage_computing(coarse_point_frame_matrix, node, object_pcld_list, object_pcld_coarse_index_list, mask_point_clouds, frame_list, args)
 
         total_pcld_list.extend(object_pcld_list)
         total_pcld_index_list.extend(object_pcld_coarse_index_list)

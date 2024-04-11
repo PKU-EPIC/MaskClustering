@@ -61,7 +61,7 @@ def build_point_in_mask_matrix(args, scene_points, frame_list, dataset):
     return boundary_points, point_in_mask_matrix, mask_point_clouds, point_frame_matrix, global_frame_mask_list
 
 def init_nodes(global_frame_mask_list, mask_project_on_all_frames, contained_masks, undersegment_mask_ids, mask_point_clouds):
-    raw_to_be_processed = []
+    nodes = []
     for global_mask_id, (frame_id, mask_id) in enumerate(global_frame_mask_list):
         if global_mask_id in undersegment_mask_ids:
             continue
@@ -69,10 +69,10 @@ def init_nodes(global_frame_mask_list, mask_project_on_all_frames, contained_mas
         frame = mask_project_on_all_frames[global_mask_id]
         frame_mask = contained_masks[global_mask_id]
         complete_vertex_index = mask_point_clouds[f'{frame_id}_{mask_id}']
-        node_info = (0, len(raw_to_be_processed))
-        segment = Node(mask_list, frame, frame_mask, complete_vertex_index, node_info, None)
-        raw_to_be_processed.append(segment)
-    return raw_to_be_processed
+        node_info = (0, len(nodes))
+        node = Node(mask_list, frame, frame_mask, complete_vertex_index, node_info, None)
+        nodes.append(node)
+    return nodes
 
 def get_observer_num_thresholds(visible_frames):
     '''
