@@ -23,7 +23,7 @@ def get_seq_name_list(dataset):
         file_path = 'data/splits/matterport3d.txt'
     with open(file_path, 'r') as f:
         seq_name_list = f.readlines()
-    seq_name_list = [seq_name.strip() for seq_name in seq_name_list]
+    seq_name_list = [seq_name.strip() for seq_name in seq_name_list][:1]
     return seq_name_list
 
 def parallel_compute(general_command, command_name, resource_type, cuda_list, seq_name_list):
@@ -62,7 +62,7 @@ def main(args):
         image_path_pattern = '*/undistorted_color_images/*.jpg' # stride = 1
         gt = 'data/matterport3d/gt'
 
-    cuda_list = [0, 1]
+    cuda_list = [0]
 
     t0 = time.time()
     seq_name_list = get_seq_name_list(dataset)

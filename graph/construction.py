@@ -111,20 +111,20 @@ def process_one_mask(point_in_mask_matrix, boundary_points, mask_point_cloud, fr
         mask_id_count = np.bincount(mask_point_cloud_info[:, frame_id])
         invisible_ratio = mask_id_count[0] / np.sum(mask_id_count) # 0 means that this point is invisible in this frame
         # If in a frame, most points in this mask are missing, then we think this mask is invisible in this frame.
-        if invisible_ratio > args.mask_disappear_ratio and (np.sum(mask_id_count) - mask_id_count[0]) < args.mask_disappear_num:
+        if 1 - invisible_ratio < args.mask_visible_threshold and (np.sum(mask_id_count) - mask_id_count[0]) < args.mask_disappear_num:
             continue
         visible_num += 1
         mask_id_count[0] = 0
         max_mask_id = np.argmax(mask_id_count)
         contained_ratio = mask_id_count[max_mask_id] / np.sum(mask_id_count)
-        if contained_ratio > args.valid_mask_ratio:
+        if contained_ratio > args.contained_threshold:
             visible_frame[frame_id] = 1
             frame_mask_idx = global_frame_mask_list.index((frame_list[frame_id], max_mask_id))
             contained_mask[frame_mask_idx] = 1
         else:
             split_num += 1 # This mask is splitted into two masks in this frame
     
-    if visible_num == 0 or split_num / visible_num > args.undersegment_mask_ratio:
+    if visible_num == 0 or split_num / visible_num > args.undersegment_filter_threshold:
         return False, visible_frame, contained_mask
     else:
         return True, visible_frame, contained_mask

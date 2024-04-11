@@ -16,7 +16,7 @@ def main(args):
     with torch.no_grad():
         nodes, observer_num_thresholds, mask_point_clouds, point_frame_matrix = mask_graph_construction(args, scene_points, frame_list, dataset)
 
-        object_list = iterative_clustering(nodes, observer_num_thresholds, args.segment_connect_ratio, args.debug)
+        object_list = iterative_clustering(nodes, observer_num_thresholds, args.view_consensus_threshold, args.debug)
 
         export_objects(dataset, object_list, mask_point_clouds, scene_points, point_frame_matrix, frame_list, args)
 

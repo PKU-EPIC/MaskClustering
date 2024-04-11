@@ -4,7 +4,7 @@ import torch
 from utils.geometry import denoise, judge_bbox_overlay
 
 
-def merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld_bbox_list, total_object_mask_list, overlapping_ratio):
+def merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld_bbox_list, total_object_mask_list, overlapping_ratio=0.8):
     total_object_num = len(total_pcld_list)
     invalid_object = np.zeros(total_object_num, dtype=bool)
 
@@ -141,7 +141,7 @@ def export_objects(dataset, segment_list, mask_point_clouds, scene_points, coars
         total_pcld_bbox_list.extend(object_bbox_list)
         total_object_mask_list.extend(object_mask_list)
 
-    total_pcld_list, total_pcld_index_list, total_pcld_mask_list = merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld_bbox_list, total_object_mask_list, args.overlapping_ratio)
+    total_pcld_list, total_pcld_index_list, total_pcld_mask_list = merge_overlapping_objects(total_pcld_list, total_pcld_index_list, total_pcld_bbox_list, total_object_mask_list)
 
     object_dict = {}
     for i, (pcld, vertex_index, pcld_mask_list) in enumerate(zip(total_pcld_list, total_pcld_index_list, total_pcld_mask_list)):
