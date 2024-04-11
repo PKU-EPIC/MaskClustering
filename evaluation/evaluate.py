@@ -225,18 +225,14 @@ def compute_averages(aps):
 def read_pridiction_npz(path):
     pred_info = {}
     pred = np.load(path)
-    if 'pred_score' in pred:
-        score_key = 'pred_score'
-    else:
-        score_key = 'pred_scores'
 
-    num_instance = len(pred[score_key])
+    num_instance = len(pred['pred_score'])
     mask = torch.from_numpy(pred['pred_masks']).cuda()
     for i in range(num_instance):
         pred_info[path.split('/')[-1] + '_' +str(i)] = { # unique id of instance in all scenes
             'mask': mask[:, i].cpu().numpy(),
             'label_id': pred['pred_classes'][i],
-            'conf': pred[score_key][i]
+            'conf': pred['pred_score'][i]
         }
     return pred_info
 

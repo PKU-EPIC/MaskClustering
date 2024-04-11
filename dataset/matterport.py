@@ -11,7 +11,8 @@ class MatterportDataset:
         self.rgb_dir = f'{self.root}/undistorted_color_images'
         self.depth_dir = f'{self.root}/undistorted_depth_images'
         self.cam_param_dir = f'{self.root}/undistorted_camera_parameters/{seq_name}.conf'
-        self.mesh_path = f'{self.root}/house_segmentations/{seq_name}.ply'
+        self.point_cloud_path = f'{self.root}/house_segmentations/{seq_name}.ply'
+        self.mesh_path = self.point_cloud_path
         self.rgb_names, self.depth_names, self.intrinsics, self.extrinsics = \
             self._obtain_intr_extr()
         
@@ -122,7 +123,7 @@ class MatterportDataset:
 
 
     def get_scene_points(self):
-        mesh = o3d.io.read_point_cloud(self.mesh_path)
+        mesh = o3d.io.read_point_cloud(self.point_cloud_path)
         vertices = np.asarray(mesh.points)
         return vertices
 

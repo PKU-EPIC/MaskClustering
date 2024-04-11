@@ -13,7 +13,8 @@ class ScanNetDataset:
         self.depth_dir = f'{self.root}/depth'
         self.mask_image_dir = f'{self.root}/output/mask'
         self.object_dict_dir = f'{self.root}/output/object'
-        self.mesh_path = f'{self.root}/{seq_name}_vh_clean_2.ply'
+        self.point_cloud_path = f'{self.root}/{seq_name}_vh_clean_2.ply'
+        self.mesh_path = self.point_cloud_path
         self.extrinsics_dir = f'{self.root}/pose'
 
         self.depth_scale = 1000.0
@@ -100,7 +101,7 @@ class ScanNetDataset:
 
 
     def get_scene_points(self):
-        mesh = o3d.io.read_point_cloud(self.mesh_path)
+        mesh = o3d.io.read_point_cloud(self.point_cloud_path)
         vertices = np.asarray(mesh.points)
         return vertices
     

@@ -89,10 +89,10 @@ def filter_point(point_frame_matrix, node, pcld_list, point_ids_list, mask_point
     filtered_point_ids, filtered_mask_list, filtered_bbox_list = [], [], []
     for i, (point_appear_in_video_num, point_appear_in_node_matrix) in enumerate(zip(point_appear_in_video_nums, point_appear_in_node_matrixs)):
         detection_ratio = np.sum(point_appear_in_node_matrix, axis=1) / (point_appear_in_video_num + 1e-6)
-        valid_point_index = np.where(detection_ratio > args.point_filter_threshold)[0]
-        if len(valid_point_index) == 0:
+        valid_point_ids = np.where(detection_ratio > args.point_filter_threshold)[0]
+        if len(valid_point_ids) == 0 or len(object_mask_list[i]) < 2:
             continue
-        filtered_point_ids.append(point_ids_list[i][valid_point_index])
+        filtered_point_ids.append(point_ids_list[i][valid_point_ids])
         filtered_bbox_list.append([np.amin(pcld_list[i].points, axis=0), np.amax(pcld_list[i].points, axis=0)])
         filtered_mask_list.append(object_mask_list[i])
     return filtered_point_ids, filtered_bbox_list, filtered_mask_list

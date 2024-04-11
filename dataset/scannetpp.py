@@ -116,12 +116,9 @@ class ScanNetPPDataset:
         self.root = f'./data/scannetpp/data/{seq_name}'
         self.rgb_dir = f'{self.root}/iphone/rgb'
         self.depth_dir = f'{self.root}/iphone/render_depth'
-
         self.mask_image_dir = f'{self.root}/output/mask'
         self.object_dict_dir = f'{self.root}/output/object'
-
-        self.mesh_path = f'data/scannetpp/pcld/{seq_name}/sampled_025.ply'
-
+        self.point_cloud_path = f'data/scannetpp/pcld/{seq_name}/sampled_025.ply'
         self.load_meta_data()
 
         self.depth_scale = 1000.0
@@ -201,7 +198,7 @@ class ScanNetPPDataset:
 
 
     def get_scene_points(self):
-        mesh = o3d.io.read_point_cloud(self.mesh_path)
+        mesh = o3d.io.read_point_cloud(self.point_cloud_path)
         vertices = np.asarray(mesh.points)
         return vertices
 
