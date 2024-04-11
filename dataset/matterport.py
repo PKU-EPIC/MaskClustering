@@ -17,7 +17,7 @@ class MatterportDataset:
             self._obtain_intr_extr()
         
         # output
-        self.mask_image_dir = f'{self.root}/output/mask/'
+        self.segmentation_dir = f'{self.root}/output/mask/'
         self.object_dict_dir = f'{self.root}/output/object'
 
         self.depth_scale = 4000.0 # (0.25mm per unit) 1u = 1/4000 m
@@ -101,19 +101,19 @@ class MatterportDataset:
         return rgb    
 
 
-    def get_mask(self, frame_id):
+    def get_segmentation(self, frame_id):
         frame_name = self.rgb_names[frame_id][:-4]
-        mask_image_path = os.path.join(self.mask_image_dir, f'{frame_name}.png')
-        if not os.path.exists(mask_image_path):
-            assert False, f"Mask image not found: {mask_image_path}"
-        mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
-        return mask_image
+        segmentation_path = os.path.join(self.segmentation_dir, f'{frame_name}.png')
+        if not os.path.exists(segmentation_path):
+            assert False, f"Segmentation not found: {segmentation_path}"
+        segmentation = cv2.imread(segmentation_path, cv2.IMREAD_UNCHANGED)
+        return segmentation
 
 
     def get_frame_path(self, frame_id):
         rgb_path = os.path.join(self.rgb_dir, self.rgb_names[frame_id])
         frame_name = self.rgb_names[frame_id][:-4]
-        segmentation_path = os.path.join(self.mask_image_dir, f'{frame_name}.png')
+        segmentation_path = os.path.join(self.segmentation_dir, f'{frame_name}.png')
         return rgb_path, segmentation_path
 
 

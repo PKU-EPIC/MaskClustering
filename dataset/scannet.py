@@ -11,7 +11,7 @@ class ScanNetDataset:
         self.root = f'./data/scannet/processed/{seq_name}'
         self.rgb_dir = f'{self.root}/color_640'
         self.depth_dir = f'{self.root}/depth'
-        self.mask_image_dir = f'{self.root}/output/mask'
+        self.segmentation_dir = f'{self.root}/output/mask'
         self.object_dict_dir = f'{self.root}/output/object'
         self.point_cloud_path = f'{self.root}/{seq_name}_vh_clean_2.ply'
         self.mesh_path = self.point_cloud_path
@@ -81,17 +81,17 @@ class ScanNetDataset:
         return rgb    
 
 
-    def get_mask(self, frame_id):
-        mask_image_path = os.path.join(self.mask_image_dir, f'{frame_id}.png')
-        if not os.path.exists(mask_image_path):
-            assert False, f"Mask image not found: {mask_image_path}"
-        mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
-        return mask_image
+    def get_segmentation(self, frame_id):
+        segmentation_path = os.path.join(self.segmentation_dir, f'{frame_id}.png')
+        if not os.path.exists(segmentation_path):
+            assert False, f"Segmentation not found: {segmentation_path}"
+        segmentation = cv2.imread(segmentation_path, cv2.IMREAD_UNCHANGED)
+        return segmentation
 
 
     def get_frame_path(self, frame_id):
         rgb_path = os.path.join(self.rgb_dir.replace('color_640', 'color'), str(frame_id) + '.jpg')
-        segmentation_path = os.path.join(self.mask_image_dir, f'{frame_id}.png')
+        segmentation_path = os.path.join(self.segmentation_dir, f'{frame_id}.png')
         return rgb_path, segmentation_path
     
 

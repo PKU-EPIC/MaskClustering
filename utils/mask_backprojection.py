@@ -130,6 +130,6 @@ def turn_mask_to_point(dataset, scene_points, mask_image, frame_id):
 
 
 def frame_backprojection(dataset, scene_points, frame_id):
-    mask_image = dataset.get_mask(frame_id)
+    mask_image = dataset.get_segmentation(frame_id)
     mask_info, _, frame_point_ids = turn_mask_to_point(dataset, scene_points, mask_image, frame_id)
     return mask_info, frame_point_ids
