@@ -170,7 +170,7 @@ class ScanNetPPDataset:
         return rgb    
 
     def get_mask(self, frame_id):
-        mask_image_path = os.path.join(self.mask_image_dir, f'{frame_id}.png')
+        mask_image_path = os.path.join(self.mask_image_dir, 'frame_%06d.png' % frame_id)
         mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
         return mask_image
 
@@ -181,7 +181,7 @@ class ScanNetPPDataset:
     
     def get_frame_path(self, frame_id):
         rgb_path = os.path.join(self.rgb_dir, 'frame_%06d.jpg' % frame_id)
-        segmentation_path = os.path.join(self.mask_image_dir, f'{frame_id}.png')
+        segmentation_path = os.path.join(self.mask_image_dir, 'frame_%06d.png' % frame_id)
         return rgb_path, segmentation_path
     
     def get_label_features(self):

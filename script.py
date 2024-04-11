@@ -54,7 +54,7 @@ def main(args):
         image_path_pattern = 'color_640/*0.jpg' # stride = 10
         gt = 'data/scannet/gt'
     elif dataset == 'scannetpp':
-        root = 'data/scannet/processed'
+        root = 'data/scannetpp/data'
         image_path_pattern = 'iphone/rgb/*0.jpg' # stride = 10
         gt = 'data/scannetpp/gt'
     elif dataset == 'matterport3d':
@@ -68,7 +68,7 @@ def main(args):
     seq_name_list = get_seq_name_list(dataset)
     print('There are %d scenes' % len(seq_name_list))
     
-    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
     parallel_compute(f'python main.py --config {config} --debug', 'mask clustering', 'cuda', cuda_list, seq_name_list)
 
