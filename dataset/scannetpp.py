@@ -10,6 +10,7 @@ BaseImage = collections.namedtuple(
 BaseCamera = collections.namedtuple(
     "Camera", ["id", "model", "width", "height", "params"])
 
+
 def qvec2rotmat(qvec):
     return np.array([
         [1 - 2 * qvec[2]**2 - 2 * qvec[3]**2,
@@ -21,6 +22,7 @@ def qvec2rotmat(qvec):
         [2 * qvec[3] * qvec[1] - 2 * qvec[0] * qvec[2],
          2 * qvec[2] * qvec[3] + 2 * qvec[0] * qvec[1],
          1 - 2 * qvec[1]**2 - 2 * qvec[2]**2]])
+
 
 class Image(BaseImage):
     def qvec2rotmat(self):
@@ -34,6 +36,7 @@ class Image(BaseImage):
         world2cam[:3, :3] = R
         world2cam[:3, 3] = t
         return world2cam
+
 
 class Camera(BaseCamera):
     @property
@@ -52,6 +55,7 @@ class Camera(BaseCamera):
         else:
             raise NotImplementedError
         return K
+
 
 def read_images_text(path):
     images = {}
@@ -78,6 +82,7 @@ def read_images_text(path):
                     xys=xys, point3D_ids=point3D_ids)
     return images
 
+
 def read_cameras_text(path):
     """
     see: src/base/reconstruction.cc
@@ -103,7 +108,9 @@ def read_cameras_text(path):
                                             params=params)
     return cameras
 
+
 class ScanNetPPDataset:
+
     def __init__(self, seq_name) -> None:
         self.seq_name = seq_name
         self.root = f'./data/scannetpp/data/{seq_name}'
@@ -119,6 +126,7 @@ class ScanNetPPDataset:
 
         self.depth_scale = 1000.0
         self.image_size = (1920, 1440)
+
 
     def load_meta_data(self):
         self.frame_id_list = []
@@ -140,9 +148,11 @@ class ScanNetPPDataset:
         self.extrinsics = extrinsics
         self.intrinsics = intrinsics
     
+
     def get_frame_list(self, stride):
-        return self.frame_id_list
+        return self.frame_id_list[::stride]
     
+
     def get_intrinsics(self, frame_id):
         intrinsic_matrix = self.intrinsics[frame_id]
 
@@ -150,9 +160,11 @@ class ScanNetPPDataset:
         intrinisc_cam_parameters.set_intrinsics(self.image_size[0], self.image_size[1], intrinsic_matrix[0, 0], intrinsic_matrix[1, 1], intrinsic_matrix[0, 2], intrinsic_matrix[1, 2])
         return intrinisc_cam_parameters
     
+
     def get_extrinsic(self, frame_id):
         return self.extrinsics[frame_id]
     
+
     def get_depth(self, frame_id):
         depth_path = os.path.join(self.depth_dir, 'frame_%06d.png' % frame_id)
         depth = cv2.imread(depth_path, -1)
@@ -160,47 +172,46 @@ class ScanNetPPDataset:
         depth = depth.astype(np.float32)
         return depth
 
+
     def get_rgb(self, frame_id, change_color=True, orginal_size=False):
         rgb_path = os.path.join(self.rgb_dir, 'frame_%06d.jpg' % frame_id)
         rgb = cv2.imread(rgb_path)
         if change_color:
             rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
-        # if not orginal_size:
-        #     rgb = cv2.resize(rgb, (256, 192))
         return rgb    
+
 
     def get_mask(self, frame_id):
         mask_image_path = os.path.join(self.mask_image_dir, 'frame_%06d.png' % frame_id)
         mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
         return mask_image
 
-    def get_scene_points(self):
-        mesh = o3d.io.read_point_cloud(self.mesh_path)
-        vertices = np.asarray(mesh.points)
-        return vertices
     
     def get_frame_path(self, frame_id):
         rgb_path = os.path.join(self.rgb_dir, 'frame_%06d.jpg' % frame_id)
         segmentation_path = os.path.join(self.mask_image_dir, 'frame_%06d.png' % frame_id)
         return rgb_path, segmentation_path
     
+
     def get_label_features(self):
         label_features_dict = np.load(f'data/text_features/scannetpp.npy', allow_pickle=True).item()
         return label_features_dict
+
+
+    def get_scene_points(self):
+        mesh = o3d.io.read_point_cloud(self.mesh_path)
+        vertices = np.asarray(mesh.points)
+        return vertices
+
 
     def get_label_id(self):
         self.class_id = SCANNETPP_IDS
         self.class_label = SCANNETPP_LABELS
         
         self.label2id = {}
-        for label, id in zip(self.class_label, self.class_id):
-            self.label2id[label] = id
-
         self.id2label = {}
         for label, id in zip(self.class_label, self.class_id):
+            self.label2id[label] = id
             self.id2label[id] = label
 
         return self.label2id, self.id2label
-
-    def get_label_color(self):
-        raise NotImplementedError

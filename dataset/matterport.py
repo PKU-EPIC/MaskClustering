@@ -13,7 +13,7 @@ class MatterportDataset:
         self.cam_param_dir = f'{self.root}/undistorted_camera_parameters/{seq_name}.conf'
         self.mesh_path = f'{self.root}/house_segmentations/{seq_name}.ply'
         self.rgb_names, self.depth_names, self.intrinsics, self.extrinsics = \
-            self._obtain_intr_extr_matterport()
+            self._obtain_intr_extr()
         
         # output
         self.mask_image_dir = f'{self.root}/output/mask/'
@@ -22,31 +22,16 @@ class MatterportDataset:
         self.depth_scale = 4000.0 # (0.25mm per unit) 1u = 1/4000 m
         self.image_size = (1280, 1024)
 
-    def get_video_end(self): #TODO
-        video_end = len(self.get_image_list()) - 1
-        return video_end
-    
-    def get_window_list(self): #TODO
-        video_start = 0
-        video_end = self.get_video_end()
-        window_list = []
-        start_list = list(range(video_start, video_end, 100))
-        for window_start in start_list:
-            window_end = min(window_start+200, video_end)
-            window_list.append((window_start, window_end))
-        return window_list
-
-    def get_image_list(self, stride=1):
-        image_list = [os.path.join(self.rgb_dir, rgb_name) for rgb_name in self.rgb_names]
-        image_list = image_list[::stride]
-        return image_list
     
     def get_frame_list(self, step):
-        end = self.get_video_end() + 1
+        image_list = [os.path.join(self.rgb_dir, rgb_name) for rgb_name in self.rgb_names]
+
+        end = len(image_list)
         frame_id_list = np.arange(0, end, step)
         return list(frame_id_list)
     
-    def _obtain_intr_extr_matterport(self):
+
+    def _obtain_intr_extr(self):
         '''Obtain the intrinsic and extrinsic parameters of Matterport3D.'''
        
         with open(self.cam_param_dir, 'r') as file:
@@ -88,22 +73,25 @@ class MatterportDataset:
 
         return img_names, depth_names, intrinsics, extrinsics
 
+
     def get_intrinsics(self, frame_id):
         K = self.intrinsics[frame_id]
         intrinisc_cam_parameters = o3d.camera.PinholeCameraIntrinsic()
         intrinisc_cam_parameters.set_intrinsics(self.image_size[0], self.image_size[1], K[0, 0], K[1, 1], K[0, 2], K[1, 2])
         return intrinisc_cam_parameters
     
+
     def get_extrinsic(self, frame_id):
         return self.extrinsics[frame_id] 
     
+
     def get_depth(self, frame_id):
         depth_path = os.path.join(self.depth_dir, self.depth_names[frame_id])
         depth = cv2.imread(depth_path, -1).astype(np.uint16)
         depth = depth / self.depth_scale
         depth = depth.astype(np.float32)
-        assert depth.min() >= 0 and depth.max() < 15, f"{depth.min()} {depth.max()}"
         return depth
+
 
     def get_rgb(self, frame_id, change_color=True, orginal_size=True):
         rgb = cv2.imread(os.path.join(self.rgb_dir, self.rgb_names[frame_id]))
@@ -111,11 +99,13 @@ class MatterportDataset:
             rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
         return rgb    
 
+
     def get_mask(self, frame_id):
         frame_name = self.rgb_names[frame_id][:-4]
         mask_image_path = os.path.join(self.mask_image_dir, f'{frame_name}.png')
         mask_image = cv2.imread(mask_image_path, cv2.IMREAD_UNCHANGED)
         return mask_image
+
 
     def get_frame_path(self, frame_id):
         rgb_path = os.path.join(self.rgb_dir, self.rgb_names[frame_id])
@@ -123,18 +113,18 @@ class MatterportDataset:
         segmentation_path = os.path.join(self.mask_image_dir, f'{frame_name}.png')
         return rgb_path, segmentation_path
 
+
     def get_label_features(self):
         label_features_dict = np.load(f'data/text_features/matterport3d.npy', allow_pickle=True).item()
         return label_features_dict
 
+
     def get_scene_points(self):
-        mesh = o3d.io.read_triangle_mesh(self.mesh_path)
+        mesh = o3d.io.read_point_cloud(self.mesh_path)
         vertices = np.asarray(mesh.vertices)
         return vertices
 
-    def get_gt_labels(self):
-        raise NotImplementedError
-    
+
     def get_label_id(self):
         self.label2id = {}
         self.id2label = {}
@@ -142,6 +132,3 @@ class MatterportDataset:
             self.label2id[label] = id
             self.id2label[id] = label
         return self.label2id, self.id2label
-
-    def get_label_color(self):
-        raise NotImplementedError

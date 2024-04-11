@@ -23,7 +23,7 @@ def get_seq_name_list(dataset):
         file_path = 'data/splits/matterport3d.txt'
     with open(file_path, 'r') as f:
         seq_name_list = f.readlines()
-    seq_name_list = [seq_name.strip() for seq_name in seq_name_list][:1]
+    seq_name_list = [seq_name.strip() for seq_name in seq_name_list]
     return seq_name_list
 
 def parallel_compute(general_command, command_name, resource_type, cuda_list, seq_name_list):
@@ -62,13 +62,13 @@ def main(args):
         image_path_pattern = '*/undistorted_color_images/*.jpg' # stride = 1
         gt = 'data/matterport3d/gt'
 
-    cuda_list = [0]
+    cuda_list = [0, 1]
 
     t0 = time.time()
-    seq_name_list = get_seq_name_list(dataset)
+    seq_name_list = get_seq_name_list(dataset)[:1]
     print('There are %d scenes' % len(seq_name_list))
     
-    parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
+    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
     parallel_compute(f'python main.py --config {config} --debug', 'mask clustering', 'cuda', cuda_list, seq_name_list)
 
