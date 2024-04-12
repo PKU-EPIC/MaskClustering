@@ -1,11 +1,12 @@
 <p align="center">
 
-  <h1 align="center">MaskClustering</h1>
+  <h1 align="center">MaskClustering: View Consensus based Mask Graph Clustering
+for Open-Vocabulary 3D Instance Segmentation</h1>
     <p align="center">
         <a href="https://miyandoris.github.io/">Mi Yan</a><sup>1,2</sup></span>, 
         <a href="https://jzhzhang.github.io/">Jiazhao Zhang</a><sup>1,2</sup>
         <a href="https://github.com/fzy139/">Yan Zhu</a><sup>1</sup>, 
-        <a href="https://hughw19.github.io/">He Wang</a><sup>1,2,3</sup>, 
+        <a href="https://hughw19.github.io/">He Wang</a><sup>1,2,3</sup>
         <br>
         <sup>1</sup>Peking University, 
         <sup>2</sup>Beijing Academy of Artificial Intelligence, 
@@ -115,11 +116,38 @@ data/scannet/processed
 ```
 
 ### ScanNet++
-Please follow the official [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) guide to sign the agreement and download the data. Then clone the [ScanNet++ toolkit](https://github.com/scannetpp/scannetpp). Then modify the paths in common/configs/render.yml and render depth images by running 
+Please follow the official [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) guide to sign the agreement and download the data. Then clone the [ScanNet++ toolkit](https://github.com/scannetpp/scannetpp). Then modify the paths in common/configs/render.yml and render depth images by running the following script. We provide the render.yml we use in preprocess/scannetpp.
 ```bash
   python -m common.render common/configs/render.yml
 ```
-Since the original mesh is of super high resolution, we downsample it following official guidelines. Modify the paths in semantic/configs/prepare_training_data.yml
-```
+Since the original mesh is of super high resolution, we downsample it following official guidelines. Modify the paths in semantic/configs/prepare_training_data.yml and run the following command. We provide the prepare_training_data.yml we use in preprocess/scannetpp.
+```bash
   python -m semantic.prep.prepare_training_data semantic/configs/prepare_training_data.yml
 ```
+Finally, prepare the ground truth by runing this command. We provide the prepare_training_data.yml we use in preprocess/scannetpp.
+```bash
+  python -m semantic.prep.prepare_semantic_gt semantic/configs/prepare_semantic_gt.yml
+```
+After running the script, you will get the following directory structure:
+```
+data/scannetpp
+  ├── data
+      ├── 0d2ee665be
+          ├── iphone                            
+          |       ├── rgb
+          │         ├── frame_000000.jpg 
+          │         ├── frame_000001.jpg 
+          │         └── ... 
+          |       ├── render_depth 
+          │         ├── frame_000000.png 
+          │         ├── frame_000001.png 
+          │         └── ... 
+          |       └── ... 
+          └── scans                        
+      └── ...
+  ├── gt 
+  ├── metadata
+  ├── pcld_0.25     <- downsampled point cloud of the scene
+  └── splits
+```
+

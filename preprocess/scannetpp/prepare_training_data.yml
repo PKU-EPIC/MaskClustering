@@ -1,0 +1,33 @@
+data:
+  data_root: data/data
+
+  labels_path: data/metadata/semantic_classes.txt
+  # for instance segmentation
+  use_instances: true
+  instance_labels_path: data/metadata/instance_classes.txt
+
+  ## save multiple labels per vertex/point? ##
+  # multilabel:
+  #   max_gt: 3
+  #   multilabel_only: false
+
+  mapping_file: data/metadata/semantic_benchmark/map_benchmark.csv
+
+  list_path: data/splits/nvs_sem_val.txt
+
+  ignore_label: -100
+
+  sample_factor: 0.25
+
+  transforms:
+    # read the mesh 
+    - add_mesh_vertices
+    # map raw labels to benchmark classes
+    - map_label_to_index
+    # use segments info to get labels on the vertices, handle multilabels
+    - get_labels_on_vertices
+    # # sample points on the mesh and transfer all vertex info to the points
+    - sample_points_on_mesh
+
+# dir to save pth training data
+out_dir: data/pcld_0.25

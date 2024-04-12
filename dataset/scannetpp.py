@@ -4,6 +4,7 @@ import os
 import cv2
 import collections
 from evaluation.constants import SCANNETPP_LABELS, SCANNETPP_IDS
+import torch
 
 BaseImage = collections.namedtuple(
     "Image", ["id", "qvec", "tvec", "camera_id", "name", "xys", "point3D_ids"])
@@ -118,7 +119,7 @@ class ScanNetPPDataset:
         self.depth_dir = f'{self.root}/iphone/render_depth'
         self.segmentation_dir = f'{self.root}/output/mask'
         self.object_dict_dir = f'{self.root}/output/object'
-        self.point_cloud_path = f'data/scannetpp/pcld/{seq_name}/sampled_025.ply'
+        self.point_cloud_path = f'./data/scannetpp/pcld_0.25/{seq_name}.pth'
         self.load_meta_data()
 
         self.depth_scale = 1000.0
@@ -198,9 +199,9 @@ class ScanNetPPDataset:
 
 
     def get_scene_points(self):
-        mesh = o3d.io.read_point_cloud(self.point_cloud_path)
-        vertices = np.asarray(mesh.points)
-        return vertices
+        data = torch.load(self.point_cloud_path)
+        points = np.asarray(data['sampled_coords'])
+        return points
 
 
     def get_label_id(self):
