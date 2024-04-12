@@ -11,7 +11,7 @@
         <sup>2</sup>Beijing Academy of Artificial Intelligence, 
         <sup>3</sup>Galbot 
     <h3 align="center"><a href="https://pku-epic.github.io/MaskClustering/">Project Page</a> | <a href="https://arxiv.org/abs/2401.07745">Paper</a></h3>
-    <h2 align="center">CVPR 2024</h2>
+    <h3 align="center">CVPR 2024</h3>
     </p>
 </p>
 
@@ -20,7 +20,7 @@
 ????
 ![teaser](./figs/teaser.png)
 
-## Fast demo
+# Fast Demo
 Step 1: Install dependencies
 
 First, install PyTorch following the [official instructions](https://pytorch.org/), e.g., for CUDA 11.8.:
@@ -39,11 +39,87 @@ cd ../..
 pip install -r requirements.txt
 ```
 
-Step 2: Download demo data from [Google Drive](https://drive.google.com/file/d/1uwhJB0LKoc2meEkIz6ravYbscdB91dw7/view?usp=sharing) or from [Baidu Drive](https://pan.baidu.com/s/1jbodgv-nSmIRvKZJb1zLPg?pwd=szrt) (code: szrt). Then unzip the data to ./data and your directory should look like this: data/demo/scene0608_00, etc.
+Step 2: Download demo data from [Google Drive](https://drive.google.com/file/d/1uwhJB0LKoc2meEkIz6ravYbscdB91dw7/view?usp=sharing) or from [Baidu Drive](https://pan.baidu.com/s/1jbodgv-nSmIRvKZJb1zLPg?pwd=szrt) (password: szrt). Then unzip the data to ./data and your directory should look like this: data/demo/scene0608_00, etc.
 
 Step 3: Run the clustering demo and visualize the class-agnostic result using Pyviz3d:
 ```bash
 bash demo.sh
 ```
 
-?????
+# Quatitative Results
+In this section, we provide a comprehensive guide on installing the full version of MaskClustering, data preparation, and conducting experiments on the ScnaNet, ScanNet++, and MatterPort3D datasets.
+
+## Further installation
+To run the full pipeline of MaskClustering, you need to install 2D instance segmentation tool [Cropformer](https://github.com/qqlu/Entity) and [Open CLIP](https://github.com/mlfoundations/open_clip).
+
+### CropFormer
+The official installation of Cropformer is composed of two steps: installing detectron2 and then Cropformer. For your convenience, I have combined the two steps into the following scripts. If you have any problems, please refer to the original [Cropformer](https://github.com/qqlu/Entity/blob/main/Entityv2/CropFormer/INSTALL.md) installation guide.
+```bash
+cd third_party
+git clone git@github.com:facebookresearch/detectron2.git
+cd detectron2
+pip install -e .
+cd ../
+git clone git@github.com:qqlu/Entity.git
+cp -r Entity/Entityv2/CropFormer detectron2/projects
+cd detectron2/projects/CropFormer/entity_api/PythonAPI
+make
+cd ../..
+cd mask2former/modeling/pixel_decoder/ops
+sh make.sh
+pip install -U openmim
+mim install mmcv
+```
+We add an additional script into cropformer to make it sequentialy process all sequences.
+```bash
+cd ../../../../../../../../
+cp mask_predict.py third_party/detectron2/projects/CropFormer/demo_cropformer
+```
+Finally, download the [CropFormer checkpoint](https://huggingface.co/datasets/qqlu1992/Adobe_EntitySeg/tree/main/CropFormer_model/Entity_Segmentation/Mask2Former_hornet_3x) and modify the 'cropformer_path' variable in script.py.
+
+### CLIP
+Install the open clip library by 
+```bash
+pip install open_clip_torch
+```
+For the checkpoint, when you run the script, it will automatically download the checkpoint. However, if you want to download it manually, you can download it from [here](https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/tree/main) and set the path when loading CLIP model using 'create_model_and_transforms' function.
+
+## Data Preparation
+### ScanNet
+Please follow the official [ScanNet](http://www.scan-net.org/ScanNet/) guide to sign the agreement and send it to scannet@googlegroups.com. After receiving the response, you can download the data. You only need to download the ['.aggregation.json', '.sens', '.txt', '_vh_clean_2.0.010000.segs.json', '_vh_clean_2.ply', '_vh_clean_2.labels.ply'] files. After downloading the data, you can run the following script to prepare the data. Please change the 'raw_data_dir', 'target_data_dir', and 'split_file_path' variables before you run.
+```bash 
+cd preprocess/scannet
+python process_val.py
+```
+After running the script, you will get the following directory structure:
+```
+data/scannet/processed
+  ├── scene0011_00
+      ├── pose                            <- folder with camera poses
+      │      ├── 0.txt 
+      │      ├── 10.txt 
+      │      └── ...  
+      ├── color                           <- folder with RGB images
+      │      ├── 0.jpg  (or .png/.jpeg)
+      │      ├── 10.jpg (or .png/.jpeg)
+      │      └── ...  
+      ├── depth                           <- folder with depth images
+      │      ├── 0.png  (or .jpg/.jpeg)
+      │      ├── 10.png (or .jpg/.jpeg)
+      │      └── ...  
+      ├── intrinsic                 
+      │      └── intrinsic_depth.txt       <- camera intrinsics
+      |      └── ...
+      └── scene0011_00_vh_clean_2.ply      <- point cloud of the scene
+  └── ...
+```
+
+### ScanNet++
+Please follow the official [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) guide to sign the agreement and download the data. Then clone the [ScanNet++ toolkit](https://github.com/scannetpp/scannetpp). Then modify the paths in common/configs/render.yml and render depth images by running 
+```bash
+  python -m common.render common/configs/render.yml
+```
+Since the original mesh is of super high resolution, we downsample it following official guidelines. Modify the paths in semantic/configs/prepare_training_data.yml
+```
+  python -m semantic.prep.prepare_training_data semantic/configs/prepare_training_data.yml
+```

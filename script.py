@@ -36,7 +36,7 @@ def parallel_compute(general_command, command_name, resource_type, cuda_list, se
             if len(process_seq_name) == 0:
                 continue
             process_seq_name = '+'.join(process_seq_name)
-            command = f'CUDA_VISIBLE_DEVICES={cuda_id} {general_command} --seq_name_list {process_seq_name}'
+            command = f'CUDA_VISIBLE_DEVICES={cuda_id} {general_command % process_seq_name}'
             commands.append(command)
         execute_commands(commands, command_name, cuda_num)
     elif resource_type == 'cpu':
@@ -48,6 +48,7 @@ def parallel_compute(general_command, command_name, resource_type, cuda_list, se
 def main(args):
     dataset = args.dataset
     config = args.config
+    cropformer_path = '/raid/miyan/ckpt/Mask2Former_hornet_3x_576d0b.pth'
 
     if dataset == 'scannet':
         root = 'data/scannet/processed'
@@ -68,12 +69,12 @@ def main(args):
     seq_name_list = get_seq_name_list(dataset)
     print('There are %d scenes' % len(seq_name_list))
     
-    # parallel_compute(f'python detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset}', 'predict mask', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python third_party/detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file third_party/detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset} --seq_name_list %s --opts MODEL.WEIGHTS {cropformer_path}', 'predict mask', 'cuda', cuda_list, seq_name_list)
 
-    parallel_compute(f'python main.py --config {config}', 'mask clustering', 'cuda', cuda_list, seq_name_list)
-    # os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config}_class_agnostic --gt_path {gt} --dataset {dataset} --no_class')
+    parallel_compute(f'python main.py --config {config} --seq_name_list %s', 'mask clustering', 'cuda', cuda_list, seq_name_list)
+    os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config}_class_agnostic --gt_path {gt} --dataset {dataset} --no_class')
 
-    parallel_compute(f'python -m semantics.get_open-voc_features --config {config}', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
+    parallel_compute(f'python -m semantics.get_open-voc_features --config {config}  --seq_name_list %s', 'get open-vocabulary semantic features using CLIP', 'cuda', cuda_list, seq_name_list)
 
     parallel_compute(f'python -m semantics.open-voc_query --config {config}', 'get text labels', 'cpu', cuda_list, seq_name_list)
     

@@ -1,5 +1,5 @@
 {
     "exclude": [
-        "data","detectron2"
+        "data","third_party"
     ]
 }
