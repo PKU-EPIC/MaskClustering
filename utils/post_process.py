@@ -184,7 +184,7 @@ def post_process(dataset, node_list, mask_point_clouds, scene_points, point_fram
             continue
         
         pcld, point_ids = node.get_point_cloud(scene_points)
-        pcld_list, point_ids_list = dbscan_process(pcld, point_ids, args.dbscan_threshold) # split the disconnected point cloud into different objects
+        pcld_list, point_ids_list = dbscan_process(pcld, point_ids) # split the disconnected point cloud into different objects
         point_ids_list, bbox_list, mask_list = filter_point(point_frame_matrix, node, pcld_list, point_ids_list, mask_point_clouds, frame_list, args)
 
         total_point_ids_list.extend(point_ids_list)

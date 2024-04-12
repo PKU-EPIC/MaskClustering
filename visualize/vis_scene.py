@@ -3,7 +3,8 @@ import pyviz3d.visualizer as viz
 from utils.config import get_dataset, get_args
 import open3d as o3d
 
-np.random.seed(1)
+# Since there are hundreds of objects in the scene, assigning visually distinguishable colors to each object is difficult. You can change the random seed to check if the two objects are actually segmented apart.
+np.random.seed(2)
 
 def vis_one_object(point_ids, scene_points):
     points = scene_points[point_ids]
@@ -19,7 +20,12 @@ def main(args):
     mesh = o3d.io.read_triangle_mesh(dataset.mesh_path)
     scene_points = np.asarray(mesh.vertices)
     scene_points = scene_points - np.mean(scene_points, axis=0)
-    scene_colors = np.asarray(mesh.vertex_colors) * 255
+    scene_colors = np.asarray(mesh.vertex_colors)
+
+    # Since the color of raw scan may be too dark, we brighten it tone mapping
+    scene_colors = np.power(scene_colors, 1/2.2)
+    scene_colors = scene_colors * 255
+
     instance_colors = np.zeros_like(scene_colors)
 
     v = viz.Visualizer()
@@ -35,14 +41,20 @@ def main(args):
 
         point_ids, points, colors, label_color, center = vis_one_object(point_ids, scene_points)
         instance_colors[point_ids] = label_color
-        # label_colors.append(label_color)
-        # labels.append(str(idx))
-        # centers.append(center)
+        label_colors.append(label_color)
+        labels.append(str(idx))
+        centers.append(center)
+        # If you want to visualize each object separately, you can uncomment the following line.
         # v.add_points(f'{idx}', points, colors, visible=True, point_size=point_size)
 
-    v.add_points('RGB', scene_points, scene_colors, visible=True, point_size=point_size)
-    v.add_points('Instances', scene_points, instance_colors, visible=True, point_size=point_size)
-    # v.add_labels('Labels', labels, centers, label_colors, visible=False)
+    v.add_points('RGB', scene_points, scene_colors, visible=False, point_size=point_size)
+
+    labeled_scene_points_mask = np.where(np.sum(instance_colors, axis=1) != 0)
+    v.add_points('Instances', scene_points[labeled_scene_points_mask], instance_colors[labeled_scene_points_mask], visible=True, point_size=point_size)
+
+    # If you want to visualize the label id of each object, you can uncomment the following line.
+    # v.add_labels('Labels', labels, centers, label_colors)
+
     v.save(f'data/vis/{args.seq_name}')
 
 

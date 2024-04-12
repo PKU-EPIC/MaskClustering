@@ -111,7 +111,7 @@ def process_one_mask(point_in_mask_matrix, boundary_points, mask_point_cloud, fr
         mask_id_count = np.bincount(mask_point_cloud_info[:, frame_id])
         invisible_ratio = mask_id_count[0] / np.sum(mask_id_count) # 0 means that this point is invisible in this frame
         # If in a frame, most points in this mask are missing, then we think this mask is invisible in this frame.
-        if 1 - invisible_ratio < args.mask_visible_threshold and (np.sum(mask_id_count) - mask_id_count[0]) < args.mask_disappear_num:
+        if 1 - invisible_ratio < args.mask_visible_threshold and (np.sum(mask_id_count) - mask_id_count[0]) < 500:
             continue
         visible_num += 1
         mask_id_count[0] = 0
