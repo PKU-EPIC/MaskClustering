@@ -53,6 +53,10 @@ def get_parser():
         type=str
     )
     parser.add_argument(
+        "--dataset",
+        type=str
+    )
+    parser.add_argument(
         "--confidence-threshold",
         type=float,
         default=0.5,
@@ -68,13 +72,14 @@ if __name__ == "__main__":
     demo = VisualizationDemo(cfg)
 
     seq_name_list = args.seq_name_list.split('+')
-    for seq_name in tqdm(seq_name_list):
+    for i, seq_name in tqdm(enumerate(seq_name_list), total=len(seq_name_list)):
         seq_dir = os.path.join(args.root, seq_name)
         image_list = sorted(glob.glob(os.path.join(seq_dir, args.image_path_pattern)))
-        output_dir = os.path.join(seq_dir, 'mask')
+        output_dir = os.path.join(seq_dir, seq_name, 'output/mask') if args.dataset == 'matterport3d' else os.path.join(seq_dir, 'output/mask')
+        
         os.makedirs(output_dir, exist_ok=True)
         
-        for path in image_list:
+        for path in (image_list):
             # use PIL, to be consistent with evaluation
             img = read_image(path, format="BGR")
             predictions = demo.run_on_image(img)

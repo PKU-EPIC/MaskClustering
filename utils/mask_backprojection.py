@@ -1,11 +1,9 @@
 import numpy as np
 from pytorch3d.ops import ball_query
 import torch
-import os
 import open3d as o3d
 from utils.geometry import denoise
 from torch.nn.utils.rnn import pad_sequence
-import cv2
 
 COVERAGE_THRESHOLD = 0.3
 DISTANCE_THRESHOLD = 0.03
