@@ -116,18 +116,20 @@ data/scannet/processed
 ```
 
 ### ScanNet++
-Please follow the official [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) guide to sign the agreement and download the data. Then clone the [ScanNet++ toolkit](https://github.com/scannetpp/scannetpp). Then modify the paths in common/configs/render.yml and render depth images by running the following script. We provide the render.yml we use in preprocess/scannetpp.
+Please follow the official [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) guide to sign the agreement and download the data. <u>**In order to help reproduce the results, we provide the configs we use to download and preprocess the scannet++.**</u> Please modify the paths in these configs before running the script. Then clone the [ScanNet++ toolkit](https://github.com/scannetpp/scannetpp).
+
+To extract the rgb and depth image, run the following script:
 ```bash
+  python -m iphone.prepare_iphone_data iphone/configs/prepare_iphone_data.yml
   python -m common.render common/configs/render.yml
 ```
-Since the original mesh is of super high resolution, we downsample it following official guidelines. Modify the paths in semantic/configs/prepare_training_data.yml and run the following command. We provide the prepare_training_data.yml we use in preprocess/scannetpp.
+
+Since the original mesh is of super high resolution, we downsample it and generate the ground truth accordingly as the following:
 ```bash
   python -m semantic.prep.prepare_training_data semantic/configs/prepare_training_data.yml
-```
-Finally, prepare the ground truth by runing this command. We provide the prepare_training_data.yml we use in preprocess/scannetpp.
-```bash
   python -m semantic.prep.prepare_semantic_gt semantic/configs/prepare_semantic_gt.yml
 ```
+
 After running the script, you will get the following directory structure:
 ```
 data/scannetpp

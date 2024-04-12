@@ -56,7 +56,7 @@ def main(args):
         gt = 'data/scannet/gt'
     elif dataset == 'scannetpp':
         root = 'data/scannetpp/data'
-        image_path_pattern = 'iphone/rgb/*0.jpg' # stride = 10
+        image_path_pattern = 'iphone/rgb/*0.jpg'
         gt = 'data/scannetpp/gt'
     elif dataset == 'matterport3d':
         root = 'data/matterport3d/scans'

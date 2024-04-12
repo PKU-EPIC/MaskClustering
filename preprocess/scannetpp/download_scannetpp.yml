@@ -1,0 +1,207 @@
+################################################################################
+#        _____                           _   __         __                     #
+#       / ___/  _____  ____ _   ____    / | / /  ___   / /_    __     __       #
+#       \__ \  / ___/ / __ `/  / __ \  /  |/ /  / _ \ / __/ __/ /_ __/ /_      #
+#      ___/ / / /__  / /_/ /  / / / / / /|  /  /  __// /_  /_  __//_  __/      #
+#     /____/  \___/  \__,_/  /_/ /_/ /_/ |_/   \___/ \__/   /_/    /_/         #
+#                                                                              #
+################################################################################
+#                                                                              #
+# TL;DR: How to download ScanNet++ data                                        #
+# -------------------------------------                                        #
+# 1. Set your personalized token in `token`.                                   #
+# 2. Set the download location in `data_root`.                                 #
+# 3. (Optional) All scenes are downloaded by default. Select the splits to     #
+#    download in `download_splits` or individual scenes by ID in               #
+#    `download_scenes`. Scene lists can be downloaded by setting               #
+#    `metadata_only` to true.                                                  #
+# 4. (Optional) The assets in `default_assets` are downloaded by default.      #
+#    Set `download_assets` or `download_options` to specify individual assets  #
+#    or asset groups.                                                          #
+# 6. Run: pip install -r requirements.txt                                      #
+# 5. Run: python download_scannetpp.py download_scannetpp.yml                  #
+#                                                                              #
+################################################################################
+
+###### token ###### enter your personalized token here
+token: Your_token_here
+###### download the data here ######
+# specify an absolute path
+data_root: /raid/miyan/scannet++/
+
+# root url of the data
+root_url: https://kaldir.vc.in.tum.de/scannetpp/download?token=TOKEN&file=FILEPATH
+
+# download the metadata only, change this to true
+metadata_only: false
+
+# show output for each file being download and unzipped
+verbose: false
+
+###### specify the scenes to download ######
+# select the splits to download
+# download_splits: [nvs_sem_train, nvs_sem_val, nvs_test, sem_test]
+download_splits: [nvs_sem_val]
+
+
+# uncomment this and comment above to download data only for specific scenes
+# enter the scene IDs separated by comma
+# scene lists can be downloaded by setting metadata_only to true
+# an example scene ID is provided below
+# download_scenes: [0d2ee665be]
+
+###### specify the assets to download ######
+# by default, these assets are downloaded for each scene:
+# mesh+3D semantics, lowres dslr, iphone data
+# see `scene_assets` and the dataset documentation page for more info on each asset
+# default_assets: [
+#                 # dslr lists, images
+#                 dslr_train_test_lists_path, dslr_resized_dir, dslr_resized_mask_dir, 
+#                 # camera poses
+#                 dslr_colmap_dir, dslr_nerfstudio_transform_path,
+#                 # mesh
+#                 scan_mesh_path, scan_mesh_mask_path,
+#                 # annotation
+#                 scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path,
+#                 # iphone video and depth
+#                 iphone_video_path, iphone_video_mask_path, iphone_depth_path,
+#                 # camera poses
+#                 iphone_pose_intrinsic_imu_path, iphone_colmap_dir, iphone_exif_path
+#               ]
+
+default_assets: [
+                # mesh
+                scan_mesh_path, scan_mesh_mask_path,
+                # annotation
+                scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path,
+                # iphone video and depth
+                iphone_video_path, iphone_video_mask_path, iphone_depth_path,
+                # camera poses
+                iphone_pose_intrinsic_imu_path, iphone_colmap_dir, iphone_exif_path
+              ]
+
+# uncomment this and comment the other asset options to specify individual assets
+# the full list of assets is under `scene_assets`
+# download_assets: []        
+
+# uncomment this and comment the other asset options to specify options based on device or task        
+# see below for possible options
+# download_options: []
+
+##############################################################
+############## Nothing to be changed below this ##############
+##############################################################
+# Options by task:
+#   - nvs_dslr: novel view synthesis with DSLR images
+#   - nvs_iphone: novel view synthesis with iPhone images
+#   - semantic: download RGB mesh and semantic annotations
+
+# Options by device:
+#   - scans: all scan related data - point cloud, mesh
+#   - dslr_hires: all dslr data including hires
+#   - iphone: all iphone RGBD data
+option_assets:
+  nvs_dslr: [dslr_train_test_lists_path, dslr_resized_dir, dslr_resized_mask_dir, 
+        dslr_colmap_dir, dslr_nerfstudio_transform_path]
+  nvs_iphone: [iphone_video_path, iphone_video_mask_path, iphone_pose_intrinsic_imu_path,
+        iphone_colmap_dir]
+  semantic: [scan_mesh_path, scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path]
+  scans: [scan_transformed_poses_path, scan_pc_path, scan_pc_mask_path, 
+        scan_mesh_path, scan_mesh_mask_path, 
+        scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path]
+  dslr_hires: [dslr_train_test_lists_path, dslr_resized_dir, dslr_resized_mask_dir, 
+        dslr_original_dir, dslr_original_mask_dir,
+        dslr_colmap_dir, dslr_nerfstudio_transform_path]
+  iphone: [iphone_video_path, iphone_video_mask_path, iphone_depth_path, 
+        iphone_pose_intrinsic_imu_path, iphone_colmap_dir]
+
+# splits in the dataset
+splits: [nvs_sem_train, nvs_sem_val, nvs_test, sem_test]
+
+# other meta files to download
+meta_files:
+  - splits/nvs_sem_train.txt
+  - splits/nvs_sem_val.txt
+  - splits/nvs_test.txt
+  - splits/sem_test.txt
+  - metadata/semantic_classes.txt
+  - metadata/instance_classes.txt
+  - metadata/semantic_benchmark/top100.txt
+  - metadata/semantic_benchmark/top100_instance.txt
+  - metadata/semantic_benchmark/map_benchmark.csv
+
+#### all paths and directories to download for each scene
+scene_assets:
+  #### dslr ####
+  # images
+  # resized dslr images
+  - dslr_resized_dir 
+  # anonymization masks for dslr resized dslr images
+  - dslr_resized_mask_dir
+  # original dslr images
+  - dslr_original_dir
+  # anonymization masks for original dslr images
+  - dslr_original_mask_dir
+  ## camera poses
+  # colmap models 
+  - dslr_colmap_dir
+  # in nerfstudio format
+  - dslr_nerfstudio_transform_path 
+  # train and test image lists
+  - dslr_train_test_lists_path
+  ##### scan #####
+  ## scans
+  # point cloud
+  - scan_pc_path
+  # mask of anonymized points
+  - scan_pc_mask_path
+  # scanner positions
+  - scan_transformed_poses_path
+  ## mesh
+  # RGB mesh
+  - scan_mesh_path
+  # mask of anonymized mesh vertices
+  - scan_mesh_mask_path
+  ## 3d semantic annotation on mesh
+  # mesh surface segments
+  - scan_mesh_segs_path
+  # annotation on mesh segments
+  - scan_anno_json_path
+  # mesh with semantic labels on vertices
+  - scan_sem_mesh_path
+  # #### iphone ####
+  ## rgb
+  # rgb video
+  - iphone_video_path 
+  # video of anonymization masks for rgb video
+  - iphone_video_mask_path
+  # depth, binary file
+  - iphone_depth_path
+  # ARKit metadata
+  - iphone_pose_intrinsic_imu_path
+  ## camera poses, similar to DSLR
+  - iphone_colmap_dir
+  - iphone_nerfstudio_transform_path
+  # exif data
+  - iphone_exif_path
+
+# some assets are not present in the test sets
+exclude_assets:
+  # 3D information and dslr test images 
+  # not present in the nvs test set
+  nvs_test: [iphone_depth_path, 
+            scan_pc_path, scan_pc_mask_path, scan_transformed_poses_path, 
+            scan_mesh_path, scan_mesh_mask_path, 
+            scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path]
+  # all annotation related files not present in the sem test set
+  sem_test: [scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path]
+
+# unzip these assets
+zipped_assets: [
+  dslr_resized_dir, dslr_resized_mask_dir, dslr_original_dir, dslr_original_mask_dir,
+  dslr_colmap_dir, 
+  scan_pc_path, scan_mesh_path, scan_sem_mesh_path,
+  scan_mesh_segs_path, scan_anno_json_path,
+  iphone_video_mask_path, iphone_depth_path, iphone_pose_intrinsic_imu_path, 
+  iphone_colmap_dir, iphone_nerfstudio_transform_path, iphone_exif_path
+]
