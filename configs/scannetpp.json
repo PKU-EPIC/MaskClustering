@@ -6,5 +6,5 @@
     "point_filter_threshold": 0.7,
     "dataset": "scannetpp",
     "cropformer_path": "/raid/miyan/ckpt/Mask2Former_hornet_3x_576d0b.pth",
-    "step": 1
+    "step": 2
 }

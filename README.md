@@ -157,7 +157,7 @@ data/scannetpp
 TODO
 
 ## Running Experiments
-Simply find the corresponding script in the 'configs' folder and run the following command. **Remember to change the 'cropformer_path' variable in the config and the 'CUDA_LIST' variable in the run.py.**
+Simply find the corresponding config in the 'configs' folder and run the following command. **Remember to change the 'cropformer_path' variable in the config and the 'CUDA_LIST' variable in the run.py.**
 ```bash
   python run.py --config config_name
 ```
