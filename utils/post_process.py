@@ -141,7 +141,6 @@ def export_class_agnostic_mask(args, class_agnostic_mask_list):
     }
     class_agnostic_pred_dir = os.path.join('data/prediction', args.config + '_class_agnostic')
     os.makedirs(class_agnostic_pred_dir, exist_ok=True)
-    print(class_agnostic_pred_dir)
     np.savez(os.path.join(class_agnostic_pred_dir, f'{args.seq_name}.npz'), **pred_dict)
     return
 

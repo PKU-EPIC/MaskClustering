@@ -4,7 +4,7 @@ from utils.config import get_dataset, get_args
 import open3d as o3d
 
 # Since there are hundreds of objects in the scene, assigning visually distinguishable colors to each object is difficult. You can change the random seed to check if the two objects are actually segmented apart.
-np.random.seed(2)
+np.random.seed(4)
 
 def vis_one_object(point_ids, scene_points):
     points = scene_points[point_ids]
@@ -30,8 +30,8 @@ def main(args):
 
     v = viz.Visualizer()
 
-    # pred = np.load(f'data/prediction/{args.config}_class_agnostic/{args.seq_name}.npz')
-    pred = np.load(f'data/prediction/{args.config}/{args.seq_name}.npz')
+    pred = np.load(f'data/prediction/{args.config}_class_agnostic/{args.seq_name}.npz')
+    # pred = np.load(f'data/prediction/{args.config}/{args.seq_name}.npz')
 
     masks = pred['pred_masks']
     num_instances = masks.shape[1]

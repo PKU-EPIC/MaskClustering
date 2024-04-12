@@ -9,7 +9,7 @@ class DemoDataset:
     def __init__(self, seq_name) -> None:
         self.seq_name = seq_name
         self.root = f'./data/demo/{seq_name}'
-        self.rgb_dir = f'{self.root}/color'
+        self.rgb_dir = f'{self.root}/color_640'
         self.depth_dir = f'{self.root}/depth'
         self.segmentation_dir = f'{self.root}/output/mask'
         self.object_dict_dir = f'{self.root}/output/object'
@@ -72,7 +72,7 @@ class DemoDataset:
 
 
     def get_frame_path(self, frame_id):
-        rgb_path = os.path.join(self.rgb_dir.replace('color_640', 'color'), str(frame_id) + '.jpg')
+        rgb_path = os.path.join(self.rgb_dir, str(frame_id) + '.jpg')
         segmentation_path = os.path.join(self.segmentation_dir, f'{frame_id}.png')
         return rgb_path, segmentation_path
     
