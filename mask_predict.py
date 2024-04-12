@@ -28,7 +28,7 @@ def setup_cfg(args):
     add_deeplab_config(cfg)
     add_maskformer2_config(cfg)
     cfg.merge_from_file(args.config_file)
-    cfg.MODEL.WEIGHTS = '/raid/miyan/ckpt/Mask2Former_hornet_3x_576d0b.pth'
+    cfg.merge_from_list(args.opts)
     cfg.freeze()
     return cfg
 
@@ -61,6 +61,12 @@ def get_parser():
         type=float,
         default=0.5,
         help="Minimum score for instance predictions to be shown",
+    )
+    parser.add_argument(
+        "--opts",
+        help="Modify config options using the command-line 'KEY VALUE' pairs",
+        default=[],
+        nargs=argparse.REMAINDER,
     )
     return parser
 
@@ -105,4 +111,4 @@ if __name__ == "__main__":
                     continue
                 mask_image[(selected_masks[index]==1).cpu().numpy()] = mask_id
                 mask_id += 1
-            cv2.imwrite(os.path.join(output_dir, os.path.basename(path).split('.')[0] + '.png'), mask_image, [cv2.IMREAD_UNCHANGED])
+            cv2.imwrite(os.path.join(output_dir, os.path.basename(path).split('.')[0] + '.png'), mask_image)

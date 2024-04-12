@@ -18,7 +18,7 @@ for Open-Vocabulary 3D Instance Segmentation</h1>
 
 <br/>
 
-????
+TODO
 ![teaser](./figs/teaser.png)
 
 # Fast Demo
@@ -116,7 +116,7 @@ data/scannet/processed
 ```
 
 ### ScanNet++
-Please follow the official [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) guide to sign the agreement and download the data. <u>**In order to help reproduce the results, we provide the configs we use to download and preprocess the scannet++.**</u> Please modify the paths in these configs before running the script. Then clone the [ScanNet++ toolkit](https://github.com/scannetpp/scannetpp).
+Please follow the official [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) guide to sign the agreement and download the data. **In order to help reproduce the results, we provide the configs we use to download and preprocess the scannet++ in preprocess/scannetpp.** Please modify the paths in these configs and paste them to the corresponding folders before running the script. Then clone the [ScanNet++ toolkit](https://github.com/scannetpp/scannetpp).
 
 To extract the rgb and depth image, run the following script:
 ```bash
@@ -153,3 +153,23 @@ data/scannetpp
   └── splits
 ```
 
+### MatterPort3D
+TODO
+
+## Running Experiments
+Simply find the corresponding script in the 'configs' folder and run the following command. **Remember to change the 'cropformer_path' variable in the config and the 'CUDA_LIST' variable in the run.py.**
+```bash
+  python run.py --config config_name
+```
+For example, to run the ScanNet experiment, you can run the following command:
+```bash
+  python run.py --config scannet
+```
+This run.py will get the 2D instance masks, run mask clustering, get open-vocabulary features and evaluate the results. The evaluation results will be saved in the 'data/evaluation' folder.
+
+TODO time and memory usage
+
+To visualize the 3D class-agnostic result of one specific scene, run the following command:
+```bash
+  python -m visualize.vis_scene --config scannet --seq_name scene0608_00
+```

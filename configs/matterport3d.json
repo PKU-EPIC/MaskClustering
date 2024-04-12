@@ -1,0 +1,10 @@
+{
+    "mask_visible_threshold": 0.3,
+    "undersegment_filter_threshold": 0.3,
+    "view_consensus_threshold": 0.9,
+    "contained_threshold": 0.8,
+    "point_filter_threshold": 0.5,
+    "dataset": "matterport3d",
+    "cropformer_path": "/raid/miyan/ckpt/Mask2Former_hornet_3x_576d0b.pth",
+    "step": 1
+}
