@@ -63,11 +63,13 @@ class ScanNetDataset:
         return rgb    
 
 
-    def get_segmentation(self, frame_id):
+    def get_segmentation(self, frame_id, align_with_depth=False):
         segmentation_path = os.path.join(self.segmentation_dir, f'{frame_id}.png')
         if not os.path.exists(segmentation_path):
             assert False, f"Segmentation not found: {segmentation_path}"
         segmentation = cv2.imread(segmentation_path, cv2.IMREAD_UNCHANGED)
+        if align_with_depth:
+            segmentation = cv2.resize(segmentation, self.image_size, interpolation=cv2.INTER_NEAREST)
         return segmentation
 
 

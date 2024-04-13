@@ -70,7 +70,6 @@ def turn_mask_to_point(dataset, scene_points, mask_image, frame_id):
         if mask_id == 0:
             continue
         segmentation = mask_image == mask_id
-        # valid_mask = torch.logical_and(segmentation, depth_mask).cpu().numpy()
         valid_mask = segmentation[depth_mask].cpu().numpy()
 
         mask_pcld = o3d.geometry.PointCloud()
@@ -128,6 +127,6 @@ def turn_mask_to_point(dataset, scene_points, mask_image, frame_id):
 
 
 def frame_backprojection(dataset, scene_points, frame_id):
-    mask_image = dataset.get_segmentation(frame_id)
+    mask_image = dataset.get_segmentation(frame_id, align_with_depth=True)
     mask_info, _, frame_point_ids = turn_mask_to_point(dataset, scene_points, mask_image, frame_id)
     return mask_info, frame_point_ids
