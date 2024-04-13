@@ -4,7 +4,7 @@ import shutil
 
 raw_data_dir = '../../data/scannet/raw/scans'
 target_data_dir = '../../data/scannet/processed'
-split_file_path = '../../data/splits/scannet.txt'
+split_file_path = '../../splits/scannet.txt'
 
 def process_one_seq(seq_name):
     target_seq_dir = os.path.join(target_data_dir, seq_name)

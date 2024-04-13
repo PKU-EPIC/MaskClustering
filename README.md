@@ -47,7 +47,7 @@ Step 3: Run the clustering demo and visualize the class-agnostic result using Py
 bash demo.sh
 ```
 
-# Quatitative Results
+# Quantitative Results
 In this section, we provide a comprehensive guide on installing the full version of MaskClustering, data preparation, and conducting experiments on the ScnaNet, ScanNet++, and MatterPort3D datasets.
 
 ## Further installation
@@ -154,7 +154,31 @@ data/scannetpp
 ```
 
 ### MatterPort3D
-TODO
+Please follow the official [MatterPort3D](https://github.com/niessner/Matterport) guide to sign the agreement and download the data. We use a subset of its testing scenes to ensure Mask3D remains within memory constraints. The list of scenes we use can be found in splits/matterport3d.txt. Download only the following: ['undistorted_color_images', 'undistorted_depth_images', 'undistorted_camera_parameters', 'house_segmentations']. Upon download, unzip the files. Your directory structure should resemble (or you can modify the paths in 'preprocess/matterport3d/process.py' and 'dataset/matterport.py'):
+```
+data/matterport3d/scans
+  ├── 2t7WUuJeko7
+      ├── 2t7WUuJeko7
+          ├── house_segmentations
+          |         ├── 2t7WUuJeko7.ply
+          |         └── ...
+          ├── undistorted_camera_parameters
+          |         └── 2t7WUuJeko7.conf
+          ├── undistorted_color_images
+          |         ├── xxx_i0_0.jpg
+          |         └── ...
+          └── undistorted_depth_images
+                    ├── xxx_d0_0.png
+                    └── ...
+  ├── ARNzJeq3xxb
+  ├── ...
+  └── YVUC4YcDtcY
+```
+Then run the following script to prepare the ground truth:
+```bash
+cd preprocess/matterport3d
+python process.py
+```
 
 ## Running Experiments
 Simply find the corresponding config in the 'configs' folder and run the following command. **Remember to change the 'cropformer_path' variable in the config and the 'CUDA_LIST' variable in the run.py.**
