@@ -172,7 +172,7 @@ This run.py will get the 2D instance masks, run mask clustering, get open-vocabu
 We report the GPU hour of each step on Nvidia 3090 GPU.
 |              | 2D mask prediction | mask clustering | CLIP feature extraction |   Overall  |
 | :-: | :-: | :-: | :-: |:-:|
-| ScanNet      |         5          |                 |                         |            |
+| ScanNet      |         5          |    86min +      |                         |            |
 | ScanNet++    |                    |                 |                         |            |
 | MatterPort3D |                    |                 |                         |            |
 

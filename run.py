@@ -18,11 +18,11 @@ def execute_commands(commands_list, command_type, process_num):
 
 def get_seq_name_list(dataset):
     if dataset == 'scannet':
-        file_path = 'data/splits/scannet.txt'
+        file_path = 'splits/scannet.txt'
     elif dataset == 'scannetpp':
-        file_path = 'data/splits/scannetpp.txt'
+        file_path = 'splits/scannetpp.txt'
     elif dataset == 'matterport3d':
-        file_path = 'data/splits/matterport3d.txt'
+        file_path = 'splits/matterport3d.txt'
     with open(file_path, 'r') as f:
         seq_name_list = f.readlines()
     seq_name_list = [seq_name.strip() for seq_name in seq_name_list]
@@ -46,6 +46,13 @@ def parallel_compute(general_command, command_name, resource_type, cuda_list, se
         for seq_name in seq_name_list:
             commands.append(f'{general_command} --seq_name {seq_name}')
         execute_commands(commands, command_name, cuda_num)
+
+def get_label_text_feature(cuda_id):
+    label_text_feature_path = 'data/text_features/matterport3d.npy'
+    if os.path.exists(label_text_feature_path):
+        return
+    command = f'CUDA_VISIBLE_DEVICES={cuda_id} python -m semantics.extract_label_featrues'
+    os.system(command)
 
 def main(args):
     dataset = args.dataset
@@ -81,10 +88,13 @@ def main(args):
     # Step 4: Get the open-vocabulary semantic features for each 2D masks.
     parallel_compute(f'python -m semantics.get_open-voc_features --config {config}  --seq_name_list %s', 'get open-vocabulary semantic features using CLIP', 'cuda', CUDA_LIST, seq_name_list)
 
-    # Step 5: Get the text labels for each 3D instances.
+    # Step 5: Get the text CLIP features for each label.
+    get_label_text_feature(CUDA_LIST[0])
+    
+    # Step 6: Get labels for each 3D instances.
     parallel_compute(f'python -m semantics.open-voc_query --config {config}', 'get text labels', 'cpu', CUDA_LIST, seq_name_list)
     
-    # Step 6: Evaluate the class-aware results.
+    # Step 7: Evaluate the class-aware results.
     os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset}')
 
     print('total time', (time.time() - t0)//60, 'min')
