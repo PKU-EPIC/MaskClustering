@@ -53,11 +53,10 @@ class DemoDataset:
         return depth
 
 
-    def get_rgb(self, frame_id, change_color=True, orginal_size=False):
+    def get_rgb(self, frame_id, change_color=True):
         rgb_path = os.path.join(self.rgb_dir, str(frame_id) + '.jpg')
         rgb = cv2.imread(rgb_path)
-        if not orginal_size:
-            rgb = cv2.resize(rgb, self.image_size)
+
         if change_color:
             rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
         return rgb    

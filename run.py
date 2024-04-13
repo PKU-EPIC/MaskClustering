@@ -54,7 +54,7 @@ def main(args):
 
     if dataset == 'scannet':
         root = 'data/scannet/processed'
-        image_path_pattern = 'color_640/*0.jpg' # stride = 10
+        image_path_pattern = 'color/*0.jpg' # stride = 10
         gt = 'data/scannet/gt'
     elif dataset == 'scannetpp':
         root = 'data/scannetpp/data'
@@ -72,20 +72,20 @@ def main(args):
     # Step 1: use Cropformer to get 2D instance masks for all sequences.
     parallel_compute(f'python third_party/detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file third_party/detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset} --seq_name_list %s --opts MODEL.WEIGHTS {cropformer_path}', 'predict mask', 'cuda', CUDA_LIST, seq_name_list)
 
-    # Step 2: Mask clustering using our proposed method.
-    parallel_compute(f'python main.py --config {config} --seq_name_list %s', 'mask clustering', 'cuda', CUDA_LIST, seq_name_list)
+    # # Step 2: Mask clustering using our proposed method.
+    # parallel_compute(f'python main.py --config {config} --seq_name_list %s', 'mask clustering', 'cuda', CUDA_LIST, seq_name_list)
     
     # Step 3: Evaluate the class-agnostic results.
-    os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config}_class_agnostic --gt_path {gt} --dataset {dataset} --no_class')
+    # os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config}_class_agnostic --gt_path {gt} --dataset {dataset} --no_class')
 
-    # Step 4: Get the open-vocabulary semantic features for each 2D masks.
-    parallel_compute(f'python -m semantics.get_open-voc_features --config {config}  --seq_name_list %s', 'get open-vocabulary semantic features using CLIP', 'cuda', CUDA_LIST, seq_name_list)
+    # # Step 4: Get the open-vocabulary semantic features for each 2D masks.
+    # parallel_compute(f'python -m semantics.get_open-voc_features --config {config}  --seq_name_list %s', 'get open-vocabulary semantic features using CLIP', 'cuda', CUDA_LIST, seq_name_list)
 
-    # Step 5: Get the text labels for each 3D instances.
-    parallel_compute(f'python -m semantics.open-voc_query --config {config}', 'get text labels', 'cpu', CUDA_LIST, seq_name_list)
+    # # Step 5: Get the text labels for each 3D instances.
+    # parallel_compute(f'python -m semantics.open-voc_query --config {config}', 'get text labels', 'cpu', CUDA_LIST, seq_name_list)
     
-    # Step 6: Evaluate the class-aware results.
-    os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset}')
+    # # Step 6: Evaluate the class-aware results.
+    # os.system(f'python -m evaluation.evaluate --pred_path data/prediction/{config} --gt_path {gt} --dataset {dataset}')
 
     print('total time', (time.time() - t0)//60, 'min')
     print('Average time', (time.time() - t0) / len(seq_name_list), 'sec')

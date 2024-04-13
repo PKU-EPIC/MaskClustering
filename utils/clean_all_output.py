@@ -32,12 +32,12 @@ if __name__ == '__main__':
     args.dataset = 'scannet'
     process_one_dataset(split_path, args)
 
-    # ScanNet++
-    split_path = 'data/splits/scannetpp.txt'
-    args.dataset = 'scannetpp'
-    process_one_dataset(split_path, args)
+    # # ScanNet++
+    # split_path = 'data/splits/scannetpp.txt'
+    # args.dataset = 'scannetpp'
+    # process_one_dataset(split_path, args)
     
-    # MatterPort3d
-    split_path = 'data/splits/matterport3d.txt'
-    args.dataset = 'matterport3d'
-    process_one_dataset(split_path, args)
+    # # MatterPort3d
+    # split_path = 'data/splits/matterport3d.txt'
+    # args.dataset = 'matterport3d'
+    # process_one_dataset(split_path, args)

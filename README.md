@@ -167,8 +167,18 @@ For example, to run the ScanNet experiment, you can run the following command:
 ```
 This run.py will get the 2D instance masks, run mask clustering, get open-vocabulary features and evaluate the results. The evaluation results will be saved in the 'data/evaluation' folder.
 
-TODO time and memory usage
 
+### Time cost
+We report the GPU hour of each step on Nvidia 3090 GPU.
+|              | 2D mask prediction | mask clustering | CLIP feature extraction |
+| ------------ | ------------------ | --------------- | ----------------------- |
+| ScanNet      |                    |                 |                         |
+| ScanNet++    |                    |                 |                         |
+| MatterPort3D |                    |                 |                         |
+
+
+
+## Visualization
 To visualize the 3D class-agnostic result of one specific scene, run the following command:
 ```bash
   python -m visualize.vis_scene --config scannet --seq_name scene0608_00

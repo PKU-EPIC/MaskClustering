@@ -171,7 +171,7 @@ class ScanNetPPDataset:
         return depth
 
 
-    def get_rgb(self, frame_id, change_color=True, orginal_size=False):
+    def get_rgb(self, frame_id, change_color=True):
         rgb_path = os.path.join(self.rgb_dir, 'frame_%06d.jpg' % frame_id)
         rgb = cv2.imread(rgb_path)
         if change_color:

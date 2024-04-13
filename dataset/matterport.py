@@ -94,7 +94,7 @@ class MatterportDataset:
         return depth
 
 
-    def get_rgb(self, frame_id, change_color=True, orginal_size=True):
+    def get_rgb(self, frame_id, change_color=True):
         rgb = cv2.imread(os.path.join(self.rgb_dir, self.rgb_names[frame_id]))
         if change_color:
             rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)

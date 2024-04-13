@@ -33,7 +33,7 @@ def main(dataset, vis_dir, frame_id):
     for text, text_center in zip(text_list, text_center_list):
         cv2.putText(color_segmentation, text, text_center, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 
-    raw_rgb = dataset.get_rgb(frame_id, change_color=False, orginal_size=False)
+    raw_rgb = dataset.get_rgb(frame_id, change_color=False)
     concatenate_image = np.concatenate((raw_rgb, color_segmentation), axis=1)
     concatenate_image = cv2.resize(concatenate_image, (concatenate_image.shape[1] // 2, concatenate_image.shape[0] // 2))
     cv2.imwrite(os.path.join(vis_dir, str(frame_id) + '.png'), concatenate_image)
