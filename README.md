@@ -18,7 +18,7 @@ for Open-Vocabulary 3D Instance Segmentation</h1>
 
 <br/>
 
-TODO
+Given an RGB-D scan and a reconstructed point cloud, MaskClustering leverages **multi-view verificatio**n to merge 2D instance masks in each frame into 3D instances, achieving strong zero-shot open-vocabulary 3D instance segmentation performance on the ScanNet, ScanNet++, and MatterPort3D datasets.
 ![teaser](./figs/teaser.png)
 
 # Fast Demo
@@ -171,7 +171,7 @@ This run.py will get the 2D instance masks, run mask clustering, get open-vocabu
 ### Time cost
 We report the GPU hour of each step on Nvidia 3090 GPU.
 |              | 2D mask prediction | mask clustering | CLIP feature extraction |   Overall  |
-| ------------ | ------------------ | --------------- | ----------------------- |------------|
+| :-: | :-: | :-: | :-: |:-:|
 | ScanNet      |         5          |                 |                         |            |
 | ScanNet++    |                    |                 |                         |            |
 | MatterPort3D |                    |                 |                         |            |
