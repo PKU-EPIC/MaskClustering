@@ -101,7 +101,7 @@ class MatterportDataset:
         return rgb    
 
 
-    def get_segmentation(self, frame_id):
+    def get_segmentation(self, frame_id, align_with_depth=False):
         frame_name = self.rgb_names[frame_id][:-4]
         segmentation_path = os.path.join(self.segmentation_dir, f'{frame_name}.png')
         if not os.path.exists(segmentation_path):

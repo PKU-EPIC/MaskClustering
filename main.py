@@ -10,8 +10,8 @@ def main(args):
     dataset = get_dataset(args)
     scene_points = dataset.get_scene_points()
     frame_list = dataset.get_frame_list(args.step)
-    if os.path.exists(os.path.join(dataset.object_dict_dir, args.config, f'object_dict.npy')):
-        return
+    # if os.path.exists(os.path.join(dataset.object_dict_dir, args.config, f'object_dict.npy')):
+    #     return
 
     with torch.no_grad():
         nodes, observer_num_thresholds, mask_point_clouds, point_frame_matrix = mask_graph_construction(args, scene_points, frame_list, dataset)

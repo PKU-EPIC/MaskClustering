@@ -3,7 +3,7 @@ from tqdm import tqdm
 import time
 from utils.config import get_args
 
-CUDA_LIST = [0, 1]
+CUDA_LIST = [1]
 
 def execute_commands(commands_list, command_type, process_num):
     print('====> Start', command_type)
@@ -77,7 +77,7 @@ def main(args):
     print('There are %d scenes' % len(seq_name_list))
     
     # Step 1: use Cropformer to get 2D instance masks for all sequences.
-    # parallel_compute(f'python third_party/detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file third_party/detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset} --seq_name_list %s --opts MODEL.WEIGHTS {cropformer_path}', 'predict mask', 'cuda', CUDA_LIST, seq_name_list)
+    parallel_compute(f'python third_party/detectron2/projects/CropFormer/demo_cropformer/mask_predict.py --config-file third_party/detectron2/projects/CropFormer/configs/entityv2/entity_segmentation/mask2former_hornet_3x.yaml --root {root} --image_path_pattern {image_path_pattern} --dataset {args.dataset} --seq_name_list %s --opts MODEL.WEIGHTS {cropformer_path}', 'predict mask', 'cuda', CUDA_LIST, seq_name_list)
 
     # # Step 2: Mask clustering using our proposed method.
     parallel_compute(f'python main.py --config {config} --seq_name_list %s', 'mask clustering', 'cuda', CUDA_LIST, seq_name_list)

@@ -179,7 +179,7 @@ class ScanNetPPDataset:
         return rgb    
 
 
-    def get_segmentation(self, frame_id):
+    def get_segmentation(self, frame_id, align_with_depth=False):
         segmentation_path = os.path.join(self.segmentation_dir, 'frame_%06d.png' % frame_id)
         if not os.path.exists(segmentation_path):
             assert False, f"Segmentation not found: {segmentation_path}"
