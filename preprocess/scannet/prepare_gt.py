@@ -12,8 +12,8 @@ from evaluation.constants import SCANNET_IDS
 
 raw_data_dir = '../../data/scannet/raw/scans'
 gt_dir = '../../data/scannet/gt'
-split_file_path = '../../splits/scannet.txt'
 label_map_file = '../../data/scannet/raw/scannetv2-labels.combined.tsv'
+split_file_path = '../../splits/scannet.txt'
 
 CLOUD_FILE_PFIX = '_vh_clean_2'
 SEGMENTS_FILE_PFIX = '.0.010000.segs.json'

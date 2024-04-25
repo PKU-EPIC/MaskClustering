@@ -87,32 +87,38 @@ For the checkpoint, when you run the script, it will automatically download the 
 
 ## Data Preparation
 ### ScanNet
-Please follow the official [ScanNet](http://www.scan-net.org/ScanNet/) guide to sign the agreement and send it to scannet@googlegroups.com. After receiving the response, you can download the data. You only need to download the ['.aggregation.json', '.sens', '.txt', '_vh_clean_2.0.010000.segs.json', '_vh_clean_2.ply', '_vh_clean_2.labels.ply'] files. After downloading the data, you can run the following script to prepare the data. Please change the 'raw_data_dir', 'target_data_dir', and 'split_file_path' variables before you run.
+Please follow the official [ScanNet](http://www.scan-net.org/ScanNet/) guide to sign the agreement and send it to scannet@googlegroups.com. After receiving the response, you can download the data. You only need to download the ['.aggregation.json', '.sens', '.txt', '_vh_clean_2.0.010000.segs.json', '_vh_clean_2.ply', '_vh_clean_2.labels.ply'] files. Please also set the 'label_map' on to download the 'scannetv2-labels.combined.tsv' file.
+
+After downloading the data, you can run the following script to prepare the data. Please change the 'raw_data_dir', 'target_data_dir', 'split_file_path', 'label_map_file' and 'gt_dir' variables before you run.
 ```bash 
 cd preprocess/scannet
 python process_val.py
+python prepare_gt.py
 ```
 After running the script, you will get the following directory structure:
 ```
-data/scannet/processed
-  ├── scene0011_00
-      ├── pose                            <- folder with camera poses
-      │      ├── 0.txt 
-      │      ├── 10.txt 
-      │      └── ...  
-      ├── color                           <- folder with RGB images
-      │      ├── 0.jpg  (or .png/.jpeg)
-      │      ├── 10.jpg (or .png/.jpeg)
-      │      └── ...  
-      ├── depth                           <- folder with depth images
-      │      ├── 0.png  (or .jpg/.jpeg)
-      │      ├── 10.png (or .jpg/.jpeg)
-      │      └── ...  
-      ├── intrinsic                 
-      │      └── intrinsic_depth.txt       <- camera intrinsics
-      |      └── ...
-      └── scene0011_00_vh_clean_2.ply      <- point cloud of the scene
-  └── ...
+data/scannet
+  ├── processed
+      ├── scene0011_00
+          ├── pose                            <- folder with camera poses
+          │      ├── 0.txt 
+          │      ├── 10.txt 
+          │      └── ...  
+          ├── color                           <- folder with RGB images
+          │      ├── 0.jpg  (or .png/.jpeg)
+          │      ├── 10.jpg (or .png/.jpeg)
+          │      └── ...  
+          ├── depth                           <- folder with depth images
+          │      ├── 0.png  (or .jpg/.jpeg)
+          │      ├── 10.png (or .jpg/.jpeg)
+          │      └── ...  
+          ├── intrinsic                 
+          │      └── intrinsic_depth.txt       <- camera intrinsics
+          |      └── ...
+          └── scene0011_00_vh_clean_2.ply      <- point cloud of the scene
+  └── gt                                       <- folder with ground truth 3D instance masks
+      ├── scene0011_00.txt
+      └── ...
 ```
 
 ### ScanNet++
